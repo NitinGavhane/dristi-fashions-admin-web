@@ -8,7 +8,6 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminProvider, useAuth } from './context/AdminContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { AdminShell } from './components/AdminShell';
 import { CommandPalette, useCommandPalette } from './components/CommandPalette';
 import { breadcrumbFor, sectionFor } from './components/navigation';
@@ -38,11 +37,9 @@ const HOME = '/dashboard';
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AdminProvider>
-        <Router />
-      </AdminProvider>
-    </ThemeProvider>
+    <AdminProvider>
+      <Router />
+    </AdminProvider>
   );
 }
 

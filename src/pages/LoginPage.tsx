@@ -41,8 +41,7 @@ export function LoginPage() {
               'radial-gradient(32rem 26rem at 78% 82%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 60%)',
           }}
         />
-        <div className="grain-field" aria-hidden />
-
+  
         <div className="relative flex h-full flex-col justify-between p-12">
           <div className="flex items-center gap-3">
             <img src="/logo.jpg" alt="" className="size-10 rounded-xl object-cover ring-1 ring-border" />

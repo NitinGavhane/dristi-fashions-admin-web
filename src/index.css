@@ -1,56 +1,55 @@
 @import "tailwindcss";
 
 /*
- * The Dristi admin design system.
+ * The Dristi admin design system — a light console.
  *
  * Token vocabulary follows the shadcn/Next.js convention — background,
  * foreground, card, popover, primary, muted, accent, destructive, border,
  * input, ring — so the components read the way a Next.js dashboard reads, and
  * anyone who has worked in that ecosystem can navigate this without a tour.
  *
- * Two themes, both first-class. Dark is the default (an admin stares at this
- * all day) and keeps the Ethereal Glass character: OLED black lit by a violet
- * mesh. Light is a genuine paper-white console, not a washed-out inversion.
- * `.dark` on <html> switches; ThemeProvider owns that class.
+ * One theme, deliberately. A warm paper-white surface where separation comes
+ * from shadow and hairlines rather than from glow, carrying the Dristi violet
+ * as its accent.
  */
 
 @theme {
   /* Surfaces */
-  --color-background: #08080b;
-  --color-surface: #0d0d12;
-  --color-card: #101016;
-  --color-card-raised: #16161d;
-  --color-popover: #14141b;
+  --color-background: #f7f7f9;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-card-raised: #fbfbfd;
+  --color-popover: #ffffff;
 
   /* Text */
-  --color-foreground: rgba(255, 255, 255, 0.95);
-  --color-muted-foreground: rgba(255, 255, 255, 0.55);
-  --color-subtle-foreground: rgba(255, 255, 255, 0.35);
+  --color-foreground: #0d0d12;
+  --color-muted-foreground: #62626d;
+  --color-subtle-foreground: #9294a0;
 
   /* Lines */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.14);
-  --color-input: rgba(255, 255, 255, 0.10);
-  --color-ring: #8b5cf6;
+  --color-border: rgba(13, 13, 18, 0.09);
+  --color-border-strong: rgba(13, 13, 18, 0.16);
+  --color-input: rgba(13, 13, 18, 0.12);
+  --color-ring: #6b38d4;
 
-  /* Brand — the Dristi violet, re-lit so it stays legible on black */
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #9f75f8;
-  --color-primary-soft: #c4b5fd;
-  --color-primary-deep: #6b38d4;
+  /* Brand — the Dristi violet */
+  --color-primary: #6b38d4;
+  --color-primary-hover: #7c4ae0;
+  --color-primary-soft: #8b5cf6;
+  --color-primary-deep: #4c1d95;
   --color-primary-foreground: #ffffff;
 
   /* Accents */
-  --color-amber: #f5b942;
-  --color-success: #34d399;
-  --color-destructive: #fb7185;
-  --color-warning: #fbbf24;
-  --color-info: #818cf8;
-  --color-teal: #2dd4bf;
+  --color-amber: #b45309;
+  --color-success: #0f9d6b;
+  --color-destructive: #d92d4b;
+  --color-warning: #b45309;
+  --color-info: #5b5bd6;
+  --color-teal: #0d9488;
 
-  /* Row/hover washes — separate tokens because they invert between themes */
-  --color-hover: rgba(255, 255, 255, 0.04);
-  --color-active: rgba(255, 255, 255, 0.07);
+  /* Row and hover washes */
+  --color-hover: rgba(13, 13, 18, 0.035);
+  --color-active: rgba(13, 13, 18, 0.06);
 
   /* Type */
   --font-display: 'Clash Display', 'Plus Jakarta Sans', sans-serif;
@@ -68,48 +67,12 @@
   --radius-xl: 1.25rem;
 }
 
-/*
- * Light theme. Not an inversion — a warm paper console with its own depth
- * model, where separation comes from shadow rather than from glow.
- */
-:root:not(.dark) {
-  --color-background: #f7f7f9;
-  --color-surface: #ffffff;
-  --color-card: #ffffff;
-  --color-card-raised: #fbfbfd;
-  --color-popover: #ffffff;
-
-  --color-foreground: #0d0d12;
-  --color-muted-foreground: #62626d;
-  --color-subtle-foreground: #9294a0;
-
-  --color-border: rgba(13, 13, 18, 0.09);
-  --color-border-strong: rgba(13, 13, 18, 0.16);
-  --color-input: rgba(13, 13, 18, 0.12);
-
-  --color-primary: #6b38d4;
-  --color-primary-hover: #5b2cba;
-  --color-primary-soft: #6b38d4;
-  --color-primary-deep: #4c1d95;
-
-  --color-success: #0f9d6b;
-  --color-destructive: #d92d4b;
-  --color-warning: #b45309;
-  --color-info: #5b5bd6;
-  --color-teal: #0d9488;
-  --color-amber: #b45309;
-
-  --color-hover: rgba(13, 13, 18, 0.035);
-  --color-active: rgba(13, 13, 18, 0.06);
-}
-
 @layer base {
   html {
     overflow-x: clip;
     -webkit-text-size-adjust: 100%;
-    color-scheme: dark;
+    color-scheme: light;
   }
-  :root:not(.dark) { color-scheme: light; }
 
   body {
     font-family: var(--font-sans);
@@ -136,7 +99,7 @@
     border-radius: inherit;
   }
 
-  ::selection { background: color-mix(in srgb, var(--color-primary) 35%, transparent); }
+  ::selection { background: color-mix(in srgb, var(--color-primary) 22%, transparent); }
 
   * { scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
   *::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -150,7 +113,9 @@
 }
 
 /* ══ AMBIENCE ═══════════════════════════════════════════════════════════════
-   Fixed and pointer-events-none, so neither repaints while the page scrolls. */
+   Fixed and pointer-events-none, so it never repaints while the page scrolls.
+   A whisper of violet at the top corners keeps the white from reading as flat
+   #fff without tinting anything the eye has to read. */
 
 .mesh-field {
   position: fixed;
@@ -158,64 +123,38 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(55rem 38rem at 8% -12%, rgba(107, 56, 212, 0.20), transparent 62%),
-    radial-gradient(42rem 32rem at 98% 4%, rgba(139, 92, 246, 0.11), transparent 64%);
+    radial-gradient(55rem 38rem at 8% -12%, rgba(107, 56, 212, 0.07), transparent 62%),
+    radial-gradient(42rem 32rem at 98% 4%, rgba(139, 92, 246, 0.05), transparent 64%);
 }
-:root:not(.dark) .mesh-field {
-  background:
-    radial-gradient(55rem 38rem at 8% -12%, rgba(107, 56, 212, 0.09), transparent 62%),
-    radial-gradient(42rem 32rem at 98% 4%, rgba(139, 92, 246, 0.06), transparent 64%);
-}
-
-.grain-field {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-:root:not(.dark) .grain-field { display: none; }
 
 /* ══ ELEVATION ══════════════════════════════════════════════════════════════
-   Dark separates with a lit top edge; light separates with a real shadow. */
+   On white, separation is a real shadow — soft, low, and never a hard grey box. */
 
 .elevated {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-:root:not(.dark) .elevated {
   box-shadow: 0 1px 2px rgba(13, 13, 18, 0.05), 0 4px 16px -6px rgba(13, 13, 18, 0.08);
 }
 
 .elevated-lg {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 8px 32px -12px rgba(0, 0, 0, 0.7);
-}
-:root:not(.dark) .elevated-lg {
   box-shadow: 0 2px 6px rgba(13, 13, 18, 0.06), 0 16px 48px -16px rgba(13, 13, 18, 0.14);
 }
 
 /* Popovers, menus and the command palette. */
 .floating {
   background: var(--color-popover);
-  border: 1px solid var(--color-border-strong);
-  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-}
-:root:not(.dark) .floating {
+  border: 1px solid var(--color-border);
   box-shadow: 0 12px 40px -8px rgba(13, 13, 18, 0.18), 0 0 0 1px rgba(13, 13, 18, 0.04);
 }
 
 /* The primary surface — a lit violet plate. */
 .plate-primary {
   background: linear-gradient(150deg, var(--color-primary-hover), var(--color-primary) 55%, var(--color-primary-deep));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 20px -8px color-mix(in srgb, var(--color-primary) 80%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 6px 20px -8px color-mix(in srgb, var(--color-primary) 55%, transparent);
 }
 
 /* ══ MOTION ═════════════════════════════════════════════════════════════════*/
@@ -285,9 +224,4 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px var(--color-card-raised) inset;
   caret-color: var(--color-foreground);
   transition: background-color 9999s ease-in-out 0s;
-}
-
-/* Kills the theme flip flashing every transition on the page at once. */
-.theme-switching * {
-  transition: none !important;
 }

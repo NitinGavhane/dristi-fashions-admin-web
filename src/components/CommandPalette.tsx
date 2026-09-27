@@ -6,17 +6,9 @@
  * subsequence (so "npr" finds "New product"), and is fully arrow-key driven.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  Moon,
-  Plus,
-  Search,
-  Sun,
-  type Icon,
-} from './icons';
+import { ArrowRight, Plus, Search, type Icon } from './icons';
 import { Kbd, cx } from './primitives';
 import { NAV_ENTRIES } from './navigation';
-import { useTheme } from '../context/ThemeContext';
 
 interface Command {
   id: string;
@@ -63,7 +55,6 @@ export function CommandPalette({
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const { resolved, setChoice } = useTheme();
 
   const go = useCallback(
     (route: string) => {
@@ -98,22 +89,8 @@ export function CommandPalette({
       keywords: 'add create',
     }));
 
-    const preferences: Command[] = [
-      {
-        id: 'theme:toggle',
-        label: resolved === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
-        group: 'Preferences',
-        icon: resolved === 'dark' ? Sun : Moon,
-        run: () => {
-          setChoice(resolved === 'dark' ? 'light' : 'dark');
-          onClose();
-        },
-        keywords: 'theme dark light appearance',
-      },
-    ];
-
-    return [...navigation, ...create, ...preferences];
-  }, [go, onClose, resolved, setChoice]);
+    return [...navigation, ...create];
+  }, [go]);
 
   const results = useMemo(() => {
     const matched = commands

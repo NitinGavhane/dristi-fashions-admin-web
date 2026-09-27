@@ -26,8 +26,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dristi Fashions Admin Panel</title>
     <meta name="description" content="Dristi Fashions — admin panel for products, orders, delivery and referrals." />
-    <meta name="theme-color" content="#050505" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
     <!-- An admin console has no business being indexed. -->
     <meta name="robots" content="noindex, nofollow" />
 
@@ -49,21 +49,11 @@
       rel="stylesheet"
     />
 
-    <!-- Resolve the theme before first paint. Without this a light-mode admin
-         gets a black flash on every load, and a dark-mode one gets a white one. -->
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('dristi_admin_theme') || 'dark';
-          var dark = saved === 'dark' ||
-            (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.classList.toggle('dark', dark);
-          document.documentElement.style.backgroundColor = dark ? '#08080b' : '#f7f7f9';
-        } catch (e) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
+    <!-- Paint the canvas before the CSS bundle lands, so a slow connection
+         never flashes a different colour into the console. -->
+    <style>
+      html { background-color: #f7f7f9; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

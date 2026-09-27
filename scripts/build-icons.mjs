@@ -95,11 +95,6 @@ const ICONS = {
     TagIcon: 'Tag',
     BellIcon: 'Bell',
   },
-  Appearance: {
-    Moon: 'Moon',
-    Sun: 'Sun',
-    Monitor: 'Monitor',
-  },
   'Media & forms': {
     ImageIcon: 'Image',
     ImageOff: 'ImageBroken',

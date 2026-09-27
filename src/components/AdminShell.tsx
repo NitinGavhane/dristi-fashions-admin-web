@@ -9,21 +9,10 @@
  * a breadcrumb, which is what tells you where you are in a tool you use daily.
  */
 import { useEffect, useState, type ReactNode } from 'react';
-import {
-  Close,
-  Command,
-  LogOut,
-  Monitor,
-  Moon,
-  PanelLeft,
-  Search,
-  Sun,
-  UserIcon,
-} from './icons';
+import { Close, Command, LogOut, PanelLeft, Search, UserIcon } from './icons';
 import { NAV_ENTRIES, NAV_GROUPS, type NavEntry } from './navigation';
 import { Button, DropdownMenu, Kbd, MenuItem, MenuLabel, MenuSeparator, Tooltip, cx } from './primitives';
 import { useAuth, useConfirm } from '../context/AdminContext';
-import { useTheme, type ThemeChoice } from '../context/ThemeContext';
 
 const COLLAPSE_KEY = 'dristi_admin_sidebar_collapsed';
 
@@ -83,7 +72,6 @@ export function AdminShell({
   return (
     <div className="relative min-h-[100dvh]">
       <div className="mesh-field" aria-hidden />
-      <div className="grain-field" aria-hidden />
 
       <div className="relative z-10 flex">
         {/* Desktop sidebar */}
@@ -195,39 +183,8 @@ function Topbar({
       </button>
       <Button size="icon" variant="ghost" onClick={onOpenCommand} aria-label="Search" className="sm:hidden" icon={Search} />
 
-      <ThemeMenu />
       <AccountMenu />
     </header>
-  );
-}
-
-function ThemeMenu() {
-  const { choice, resolved, setChoice } = useTheme();
-  const options: { id: ThemeChoice; label: string; icon: typeof Sun }[] = [
-    { id: 'light', label: 'Light', icon: Sun },
-    { id: 'dark', label: 'Dark', icon: Moon },
-    { id: 'system', label: 'System', icon: Monitor },
-  ];
-
-  return (
-    <DropdownMenu
-      label="Change theme"
-      trigger={
-        <span className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-hover hover:text-foreground">
-          {resolved === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-        </span>
-      }
-    >
-      <MenuLabel>Theme</MenuLabel>
-      {options.map(option => (
-        <MenuItem key={option.id} icon={option.icon} onSelect={() => setChoice(option.id)}>
-          <span className="flex items-center gap-2">
-            {option.label}
-            {choice === option.id && <span className="size-1.5 rounded-full bg-primary" />}
-          </span>
-        </MenuItem>
-      ))}
-    </DropdownMenu>
   );
 }
 
