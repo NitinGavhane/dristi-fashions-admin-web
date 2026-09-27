@@ -1,11 +1,9 @@
-/** The props every page in the panel receives from the router in App.tsx. */
+/** Props every list page receives from the router. */
 export interface PageProps {
   onNavigate: (route: string) => void;
-  /** Opens the sidebar drawer on compact layouts. Absent on pushed form pages. */
-  onMenu?: () => void;
 }
 
-/** A pushed detail/form page, which shows a back arrow instead of the hamburger. */
+/** A pushed detail or form page, which can also go back. */
 export interface DetailPageProps {
   onNavigate: (route: string) => void;
   onBack: () => void;

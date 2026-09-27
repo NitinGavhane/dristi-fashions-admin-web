@@ -1,30 +1,30 @@
 /**
- * One order, and the status controls — a port of
+ * One order, and its status controls — a port of
  * dristi-admin-app/lib/screens/order_detail_screen.dart.
  *
  * There is no single-order admin endpoint, so this fetches the admin order list
  * and picks the row out of it, exactly as the Flutter screen does.
  */
 import { useCallback, useState } from 'react';
-import { ReceiptCancelled, ShoppingBag } from '../components/icons';
+import { ArrowLeft, ReceiptCancelled, ShoppingBag } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
-import { money, orderStatusColor, orderStatusLabel } from '../lib/format';
+import { money, orderStatusColor, orderStatusLabel, paymentStatusColor, whenLocal } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { ORDER_STATUSES } from '../types';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
+import { FormBody, PageHeader } from '../components/AdminShell';
 import {
-  BrandLoader,
+  Badge,
+  Button,
   Card,
-  DividerLine,
-  EmptyBox,
-  InfoBlock,
-  ListCard,
-  PageHeader,
-  SectionLabel,
-  Tag,
-} from '../components/ui';
+  CardContent,
+  CardHeader,
+  EmptyState,
+  Separator,
+  cx,
+} from '../components/primitives';
+import { BrandLoader } from '../components/ui';
 import type { DetailPageProps } from './types';
 
 export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId: string }) {
@@ -52,102 +52,141 @@ export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <PageHeader title="Order" onBack={onBack} />
-        <BrandLoader />
-      </>
-    );
-  }
+  if (loading) return <BrandLoader />;
 
   if (error || !order) {
     return (
-      <>
-        <PageHeader title="Order" onBack={onBack} />
-        <PageBody>
-          <EmptyBox icon={ReceiptCancelled} message={error ?? 'Not found'} />
-        </PageBody>
-      </>
+      <FormBody>
+        <PageHeader
+          title="Order"
+          actions={
+            <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+              Back
+            </Button>
+          }
+        />
+        <Card>
+          <EmptyState
+            icon={ReceiptCancelled}
+            title={error ? 'Could not load this order' : 'Order not found'}
+            description={error ?? 'It may have been removed since the list was loaded.'}
+          />
+        </Card>
+      </FormBody>
     );
   }
 
-  const accent = orderStatusColor(order.orderStatus);
+  const itemCount = order.items.reduce((n, i) => n + i.quantity, 0);
+
+  const line = (label: string, value: string, emphasis = false) => (
+    <div className="flex items-baseline justify-between gap-6 py-2">
+      <span className={cx('text-[13px]', emphasis ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+        {label}
+      </span>
+      <span className={cx('tnum text-[13.5px]', emphasis ? 'font-semibold text-foreground' : 'text-foreground')}>
+        {value}
+      </span>
+    </div>
+  );
 
   return (
-    <>
-      <PageHeader title="Order" subtitle={`#${order.orderNumber}`} onBack={onBack} />
-      <PageBody>
-        <Card accentColor={accent}>
-          <div className="flex items-start gap-2">
-            <h2 className="min-w-0 flex-1 truncate text-lg font-black tracking-[1px] text-ink">
-              #{order.orderNumber}
-            </h2>
-            <Tag text={orderStatusLabel(order.orderStatus)} color={accent} />
-          </div>
-          <DividerLine />
-          <InfoBlock label="Payment" value={order.paymentStatus.toUpperCase()} />
-          <InfoBlock label="Subtotal" value={money(order.subtotal)} />
-          <InfoBlock label="GST" value={money(order.gstAmount)} />
-          {order.discountAmount > 0 && (
-            <InfoBlock
-              label="Discount"
-              value={`-${money(order.discountAmount)}`}
-              valueColor="var(--color-success)"
-            />
-          )}
-          <DividerLine />
-          <InfoBlock label="Total" value={money(order.finalAmount)} valueColor="var(--color-accent)" />
-          {order.shippingAddress && <InfoBlock label="Address" value={order.shippingAddress} />}
-        </Card>
+    <FormBody>
+      <PageHeader
+        title={`Order #${order.orderNumber}`}
+        description={`${whenLocal(order.createdAt) || 'Date unknown'} · ${itemCount} item${itemCount === 1 ? '' : 's'}`}
+        actions={
+          <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+            Back
+          </Button>
+        }
+      />
 
-        <SectionLabel title="Items" />
-        <div className="space-y-2">
-          {order.items.length === 0 ? (
-            <EmptyBox icon={ShoppingBag} message="No items on this order" />
-          ) : (
-            order.items.map(item => (
-              <ListCard key={item.id} className="!p-3.5">
-                <div className="flex items-center gap-3.5">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-lg border border-hair bg-white/[0.03] text-muted">
-                    <ShoppingBag size={20} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-ink">{item.productName}</p>
-                    <p className="text-[11px] text-muted">Qty: {item.quantity}</p>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <Badge variant="dot" color={orderStatusColor(order.orderStatus)}>
+          {orderStatusLabel(order.orderStatus)}
+        </Badge>
+        <Badge color={paymentStatusColor(order.paymentStatus)}>{order.paymentStatus.toUpperCase()}</Badge>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-5">
+          <Card>
+            <CardHeader title="Items" description={`${itemCount} unit${itemCount === 1 ? '' : 's'} on this order.`} />
+            {order.items.length === 0 ? (
+              <EmptyState icon={ShoppingBag} title="No line items" />
+            ) : (
+              <div className="divide-y divide-border">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-3.5 px-5 py-3.5">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-hover text-subtle-foreground">
+                      <ShoppingBag size={16} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-medium text-foreground">{item.productName}</p>
+                      <p className="tnum text-[12px] text-muted-foreground">
+                        {item.quantity} × {money(item.price)}
+                      </p>
+                    </div>
+                    <span className="tnum shrink-0 text-[13.5px] font-medium text-foreground">
+                      {money(item.price * item.quantity)}
+                    </span>
                   </div>
-                  <span className="shrink-0 rounded-md border border-accent/20 bg-accent/[0.08] px-2.5 py-1.5 text-[13px] font-extrabold text-accent">
-                    {money(item.price * item.quantity)}
-                  </span>
-                </div>
-              </ListCard>
-            ))
-          )}
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Update status"
+              description="Dispatch and delivery are handled on the Delivery page; this sets the status directly."
+            />
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {ORDER_STATUSES.map(s => {
+                  const current = s === order.orderStatus;
+                  return (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={current ? 'primary' : 'outline'}
+                      disabled={current || updating !== null}
+                      loading={updating === s}
+                      onClick={() => setStatus(s)}
+                    >
+                      {orderStatusLabel(s)}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <SectionLabel title="Update Status" />
-        <div className="flex flex-wrap gap-2">
-          {ORDER_STATUSES.map(s => {
-            const current = s === order.orderStatus;
-            return (
-              <button
-                key={s}
-                type="button"
-                disabled={current || updating !== null}
-                onClick={() => setStatus(s)}
-                aria-current={current ? 'true' : undefined}
-                className={`label-caps rounded-lg border px-4 py-3 text-[10px] tracking-[1.5px] transition disabled:cursor-default ${
-                  current
-                    ? 'border-accent-deep/35 bg-accent font-extrabold text-white shadow-violet'
-                    : 'border-hair-bright bg-gradient-to-br from-accent-soft to-white font-bold text-accent hover:brightness-105 disabled:opacity-60'
-                }`}
-              >
-                {orderStatusLabel(s)}
-              </button>
-            );
-          })}
+        <div className="space-y-5">
+          <Card>
+            <CardHeader title="Summary" />
+            <CardContent className="py-2">
+              {line('Subtotal', money(order.subtotal))}
+              {line('GST', money(order.gstAmount))}
+              {order.discountAmount > 0 && line('Discount', `−${money(order.discountAmount)}`)}
+              <Separator className="my-2" />
+              {line('Total', money(order.finalAmount), true)}
+            </CardContent>
+          </Card>
+
+          {order.shippingAddress && (
+            <Card>
+              <CardHeader title="Shipping address" />
+              <CardContent>
+                <p className="whitespace-pre-line text-[13px] leading-relaxed text-muted-foreground">
+                  {order.shippingAddress}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
-      </PageBody>
-    </>
+      </div>
+    </FormBody>
   );
 }

@@ -7,27 +7,25 @@
  * storefront's gender tabs expect to find.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Close, Info, NavCategories } from '../components/icons';
+import { ArrowLeft, Close } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise } from '../lib/format';
 import { GENDER_OPTIONS, SPECIFIC_GENDERS, isMainCategoryName, isParentCategory, type AdminCategory } from '../types';
 import { IMAGE_ACCEPT, IMAGE_SPECS, UploadRejected, validateAndUploadImage } from '../lib/uploads';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
+import { FormBody, PageHeader, StickyActions } from '../components/AdminShell';
 import {
-  BrandLoader,
-  FormSection,
-  ImageSpecsBox,
-  PageHeader,
-  PrimaryButton,
-  SafeImage,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Input,
   Select,
-  TextInput,
-  ToggleRow,
-  UploadButton,
-  type SelectOption,
-} from '../components/ui';
+  Switch,
+  type Option,
+} from '../components/primitives';
+import { BrandLoader, ImageSpecsBox, NoteBox, SafeImage, UploadButton } from '../components/ui';
 import type { DetailPageProps } from './types';
 
 export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { categoryId: string | null }) {
@@ -56,7 +54,7 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
         if (live) setAllCats(c);
       })
       .catch(() => {
-        /* the parent dropdown just stays at "None (Top-level)" */
+        /* the parent dropdown just stays at "None (top level)" */
       });
     return () => {
       live = false;
@@ -100,18 +98,15 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
     };
   }, [categoryId, toast]);
 
-  const parentOptions = useMemo<SelectOption[]>(
+  const parentOptions = useMemo<Option[]>(
     () => [
-      { value: '', label: 'None (Top-level)' },
+      { value: '', label: 'None (top level)' },
       ...allCats.filter(c => isParentCategory(c) && c.id !== categoryId).map(c => ({ value: c.id, label: c.name })),
     ],
     [allCats, categoryId],
   );
 
-  /**
-   * `_genderFromParent` — the effective gender a parent confers, by the parent's
-   * own gender or by its main-category name.
-   */
+  /** The effective gender a parent confers — its own, or its main-category name. */
   const genderFromParent = (id: string): string => {
     if (!id) return '';
     const parent = allCats.find(c => c.id === id);
@@ -124,9 +119,9 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
   };
 
   /**
-   * `_resolveGender` — resolved the same way the backend does: an explicitly
-   * chosen real gender wins, otherwise inherit from the parent, otherwise the
-   * category's own name, otherwise unisex.
+   * Resolved the same way the backend does: an explicitly chosen real gender
+   * wins, otherwise inherit from the parent, otherwise the category's own name,
+   * otherwise unisex.
    */
   const resolveGender = (): string => {
     if (gender && (SPECIFIC_GENDERS as readonly string[]).includes(gender.toLowerCase())) {
@@ -149,6 +144,8 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
       setUploading(false);
     }
   };
+
+  const seedsSubcategories = !parentId && !isEdit && isMainCategoryName(name);
 
   const save = async () => {
     if (!name.trim()) {
@@ -202,102 +199,121 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <PageHeader title={isEdit ? 'Edit Category' : 'New Category'} onBack={onBack} />
-        <BrandLoader />
-      </>
-    );
-  }
+  if (loading) return <BrandLoader />;
 
   return (
-    <>
-      <PageHeader title={isEdit ? 'Edit Category' : 'New Category'} onBack={onBack} />
-      <PageBody className="space-y-4">
-        <FormSection title="Category Info">
-          <TextInput label="Category Name" value={name} onChange={setName} required error={nameError} />
-          <TextInput
-            label="Description"
-            value={description}
-            onChange={setDescription}
-            multiline={3}
-            hint="Optional"
-          />
+    <FormBody>
+      <PageHeader
+        title={isEdit ? 'Edit category' : 'New category'}
+        description="How the catalogue is organised for shoppers."
+        actions={
+          <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+            Back
+          </Button>
+        }
+      />
 
-          <ImageSpecsBox specs={IMAGE_SPECS.category} />
-          <div className="my-3">
+      <div className="space-y-5">
+        <Card>
+          <CardHeader title="Details" />
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Name"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              error={nameError}
+              placeholder="Shirts"
+            />
+            <Select
+              label="Parent category"
+              value={parentId}
+              onChange={e => {
+                setParentId(e.target.value);
+                const inherited = genderFromParent(e.target.value);
+                if (inherited) setGender(inherited);
+              }}
+              options={parentOptions}
+              description="Leave at top level to create a new branch."
+            />
+            <Input
+              label="Description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              className="sm:col-span-2"
+            />
+            <Select
+              label="Gender"
+              value={gender}
+              onChange={e => setGender(e.target.value)}
+              options={[
+                { value: '', label: 'Auto (from parent or name)' },
+                ...GENDER_OPTIONS.map(g => ({ value: g, label: capitalise(g) })),
+              ]}
+              description={`Will save as "${resolveGender()}".`}
+            />
+            <div className="flex items-end">
+              <div className="w-full">
+                <Switch
+                  label="Active"
+                  description="Hidden from the storefront when off."
+                  checked={active}
+                  onChange={setActive}
+                />
+              </div>
+            </div>
+
+            {seedsSubcategories && (
+              <div className="sm:col-span-2">
+                <NoteBox>
+                  Creating “{name.trim()}” will also seed its two default subcategories — <strong>All</strong> and{' '}
+                  <strong>{name.trim()}</strong> — which the storefront's gender tabs expect to find.
+                </NoteBox>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader title="Image" description="Shown on category tiles in the app and on the website." />
+          <CardContent className="space-y-4">
+            <ImageSpecsBox specs={IMAGE_SPECS.category} />
             <UploadButton uploading={uploading} onFile={pickImage} accept={IMAGE_ACCEPT} />
-          </div>
-          <TextInput
-            label="Image URL"
-            value={imageField}
-            onChange={setImageField}
-            hint="Upload above, or paste a URL"
-          />
+            <Input
+              label="Image URL"
+              value={imageField}
+              onChange={e => setImageField(e.target.value)}
+              description="Filled in by the upload above, or paste an external URL."
+            />
+            {imageField.trim() && (
+              <div className="relative w-full max-w-xs overflow-hidden rounded-lg border border-border">
+                <SafeImage
+                  src={imageField.trim()}
+                  alt="Category image preview"
+                  className="aspect-square w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImageField('')}
+                  aria-label="Clear image"
+                  className="absolute right-2 top-2 grid size-7 place-items-center rounded-md bg-black/60 text-white transition-colors duration-150 hover:bg-black/80"
+                >
+                  <Close size={14} />
+                </button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-          {imageField.trim() && (
-            <div className="relative mb-3.5 h-[140px] overflow-hidden rounded-lg border border-hair bg-white/[0.03]">
-              <SafeImage src={imageField.trim()} alt="Category image preview" className="size-full object-cover" />
-              <button
-                type="button"
-                onClick={() => setImageField('')}
-                aria-label="Clear image"
-                className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-md bg-accent text-white shadow-violet"
-              >
-                <Close size={16} />
-              </button>
-            </div>
-          )}
-
-          <Select
-            label="Parent Category"
-            value={parentId}
-            options={parentOptions}
-            onChange={value => {
-              setParentId(value);
-              const inherited = genderFromParent(value);
-              if (inherited) setGender(inherited);
-            }}
-          />
-          <Select
-            label="Gender"
-            value={gender}
-            options={[
-              { value: '', label: 'Auto (from parent or name)' },
-              ...GENDER_OPTIONS.map(g => ({ value: g, label: capitalise(g) })),
-            ]}
-            onChange={setGender}
-          />
-
-          <div className="flex flex-wrap items-center gap-4">
-            {isEdit && <p className="text-[11px] text-muted">Slug: {slug || 'auto'}</p>}
-            <div className="ml-auto">
-              <ToggleRow label="Active" value={active} onChange={setActive} />
-            </div>
-          </div>
-        </FormSection>
-
-        {!parentId && (
-          <div className="bg-white/[0.02] flex items-center gap-3 rounded-lg border border-amber/30 p-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]">
-            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-amber/10 text-amber">
-              <Info size={18} />
-            </span>
-            <p className="text-[11px] text-ink-soft">
-              No parent = top-level category. Subcategories can be assigned below it.
-            </p>
-          </div>
-        )}
-
-        <div className="pt-4">
-          <PrimaryButton
-            label={isEdit ? 'Update Category' : 'Create Category'}
-            loading={saving}
-            onClick={save}
-            icon={NavCategories}
-          />
-        </div>
-      </PageBody>
-    </>
+      <StickyActions>
+        <Button variant="ghost" onClick={onBack} disabled={saving}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={save} loading={saving}>
+          {isEdit ? 'Save changes' : 'Create category'}
+        </Button>
+      </StickyActions>
+    </FormBody>
   );
 }

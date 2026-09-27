@@ -1,6 +1,5 @@
 /**
- * Refer & earn control room — a port of
- * dristi-admin-app/lib/screens/referrals_screen.dart.
+ * Refer & earn — a port of dristi-admin-app/lib/screens/referrals_screen.dart.
  *
  * Every purchase made by a customer who arrived on someone's share link lands
  * here as *pending*. Nothing is ever paid automatically: the admin approves a
@@ -8,33 +7,22 @@
  * does the money reach the referrer's wallet.
  */
 import { useCallback, useState } from 'react';
-import { NavUsers, Settings, Share, Trophy } from '../components/icons';
+import { Check, Close, NavUsers, Settings, Share, Trophy } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
-import { money, trimAmount } from '../lib/format';
+import { money, trimAmount, whenLocal } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { isPendingReferral, type ReferralPurchase, type ReferralSettings } from '../types';
 import { useConfirm, useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
-import {
-  BrandLoader,
-  EmptyBox,
-  FloatingAction,
-  GhostButton,
-  ListCard,
-  Modal,
-  NoteBox,
-  PageHeader,
-  PillTabs,
-  PrimaryButton,
-  TextInput,
-  ToggleRow,
-} from '../components/ui';
+import { PageBody, PageHeader } from '../components/AdminShell';
+import { DataTable, type Column } from '../components/DataTable';
+import { Badge, Button, Input, SectionHeading, Switch } from '../components/primitives';
+import { Modal, NoteBox, PillTabs } from '../components/ui';
 import type { PageProps } from './types';
 
 type Tab = 'pending' | 'all' | 'referrers';
 
-export function ReferralsPage({ onMenu }: PageProps) {
+export function ReferralsPage(_: PageProps) {
   const [tab, setTab] = useState<Tab>('pending');
   const toast = useToast();
   const confirm = useConfirm();
@@ -44,7 +32,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
   const fetch = useCallback(async () => {
     const [settings, purchases, referrers] = await Promise.all([
       api.getReferralSettings(),
-      api.getReferralPurchases(tab === 'all' ? undefined : tab === 'pending' ? 'pending' : undefined),
+      api.getReferralPurchases(tab === 'pending' ? 'pending' : undefined),
       api.getReferralUserReport(),
     ]);
     return {
@@ -66,7 +54,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
 
   const reject = async (p: ReferralPurchase) => {
     const ok = await confirm({
-      title: 'REJECT',
+      title: 'Reject commission',
       confirmLabel: 'Reject',
       message: `Reject the commission for ${p.referrerName}? Nothing will be paid for this order.`,
     });
@@ -80,135 +68,189 @@ export function ReferralsPage({ onMenu }: PageProps) {
     }
   };
 
-  const purchaseList = () => {
-    if (purchases.length === 0) {
-      return (
-        <EmptyBox
-          icon={NavUsers}
-          message={tab === 'pending' ? 'No commissions waiting' : 'No referred sales yet'}
-        />
-      );
-    }
-
-    return purchases.map(p => {
-      const [statusColor, statusLabel] =
-        p.status === 'approved'
-          ? ['var(--color-success)', `PAID ${money(p.rewardAmount)}`]
-          : p.status === 'pending'
-            ? ['var(--color-warning)', 'PENDING']
-            : ['var(--color-error)', p.status.toUpperCase()];
-
-      return (
-        <ListCard key={p.id} className="mb-2.5">
-          <div className="flex items-start gap-3.5">
-            <span className="grid size-[52px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-bright text-white">
-              <Share size={22} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-ink">{p.referrerName}</p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-soft">
-                {p.referredUserName ?? 'A customer'} bought{p.productName ? ` ${p.productName}` : ''}
-              </p>
-              <p className="mt-1 text-[11px] text-muted">
-                Order {p.orderNumber ?? '—'} · {money(p.purchaseAmount)}
-              </p>
-            </div>
-            <span
-              className="shrink-0 rounded-md px-2 py-1 text-[10px] font-bold"
-              style={{
-                color: statusColor,
-                backgroundColor: `color-mix(in srgb, ${statusColor} 12%, transparent)`,
-              }}
-            >
-              {statusLabel}
-            </span>
-          </div>
-
-          {isPendingReferral(p) && (
-            <div className="mt-3 flex items-stretch gap-2">
-              <button
-                type="button"
-                onClick={() => setApproving(p)}
-                className="label-caps flex-1 rounded-lg bg-accent py-2.5 text-[10px] font-bold tracking-[1.5px] text-white shadow-violet transition hover:brightness-110"
-              >
-                Give commission
-              </button>
-              <button
-                type="button"
-                onClick={() => reject(p)}
-                aria-label={`Reject commission for ${p.referrerName}`}
-                className="grid w-11 place-items-center rounded-lg border border-error text-error transition hover:bg-error/5"
-              >
-                <span aria-hidden className="text-base leading-none">
-                  ✕
-                </span>
-              </button>
-            </div>
-          )}
-        </ListCard>
-      );
-    });
-  };
-
-  const referrerList = () => {
-    if (referrers.length === 0) return <EmptyBox icon={Trophy} message="No one has shared yet" />;
-    return referrers.map(r => (
-      <ListCard key={r.userId} className="mb-2.5">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-ink">{r.userName}</p>
-            <p className="truncate text-[11px] text-muted">{r.userEmail}</p>
-            <p className="mt-1 text-[11px] text-ink-soft">
-              {r.totalClicks} clicks · {r.totalPurchases} sales
-            </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-sm font-extrabold text-success">{money(r.totalEarnings)}</p>
-            {r.pendingRewards > 0 && (
-              <p className="text-[10px] text-warning">{money(r.pendingRewards)} pending</p>
-            )}
-          </div>
+  const purchaseColumns: Column<ReferralPurchase>[] = [
+    {
+      id: 'referrer',
+      header: 'Referrer',
+      sortValue: p => p.referrerName,
+      cell: p => (
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{p.referrerName}</p>
+          <p className="truncate text-[12px] text-muted-foreground">{p.referrerEmail}</p>
         </div>
-      </ListCard>
-    ));
-  };
+      ),
+    },
+    {
+      id: 'buyer',
+      header: 'Bought by',
+      secondary: true,
+      sortValue: p => p.referredUserName ?? '',
+      cell: p => (
+        <div className="min-w-0">
+          <p className="truncate text-foreground">{p.referredUserName ?? 'A customer'}</p>
+          {p.productName && <p className="truncate text-[12px] text-muted-foreground">{p.productName}</p>}
+        </div>
+      ),
+    },
+    {
+      id: 'order',
+      header: 'Order',
+      secondary: true,
+      sortValue: p => p.orderNumber ?? '',
+      cell: p => (
+        <div className="min-w-0">
+          <p className="truncate font-mono text-[12px] text-muted-foreground">#{p.orderNumber ?? '—'}</p>
+          <p className="truncate text-[11.5px] text-subtle-foreground">{whenLocal(p.createdAt)}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'value',
+      header: 'Order value',
+      align: 'right',
+      sortValue: p => p.purchaseAmount,
+      cell: p => <span className="tnum text-foreground">{money(p.purchaseAmount)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Commission',
+      align: 'right',
+      sortValue: p => p.status,
+      cell: p =>
+        p.status === 'approved' ? (
+          <Badge variant="dot" color="var(--color-success)">
+            Paid {money(p.rewardAmount)}
+          </Badge>
+        ) : p.status === 'pending' ? (
+          <Badge variant="dot" color="var(--color-warning)">
+            Pending
+          </Badge>
+        ) : (
+          <Badge variant="dot" color="var(--color-destructive)">
+            {p.status}
+          </Badge>
+        ),
+    },
+  ];
+
+  const referrerColumns: Column<(typeof referrers)[number]>[] = [
+    {
+      id: 'name',
+      header: 'Referrer',
+      sortValue: r => r.userName,
+      cell: r => (
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{r.userName}</p>
+          <p className="truncate text-[12px] text-muted-foreground">{r.userEmail}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'clicks',
+      header: 'Clicks',
+      align: 'right',
+      sortValue: r => r.totalClicks,
+      cell: r => <span className="tnum text-muted-foreground">{r.totalClicks}</span>,
+    },
+    {
+      id: 'sales',
+      header: 'Sales',
+      align: 'right',
+      sortValue: r => r.totalPurchases,
+      cell: r => <span className="tnum text-foreground">{r.totalPurchases}</span>,
+    },
+    {
+      id: 'pending',
+      header: 'Pending',
+      align: 'right',
+      secondary: true,
+      sortValue: r => r.pendingRewards,
+      cell: r => (
+        <span className="tnum" style={{ color: r.pendingRewards > 0 ? 'var(--color-warning)' : undefined }}>
+          {money(r.pendingRewards)}
+        </span>
+      ),
+    },
+    {
+      id: 'earned',
+      header: 'Paid out',
+      align: 'right',
+      sortValue: r => r.totalEarnings,
+      cell: r => <span className="tnum font-medium text-success">{money(r.totalEarnings)}</span>,
+    },
+  ];
 
   return (
-    <>
+    <PageBody>
       <PageHeader
         title="Referrals"
-        subtitle={
+        description={
           settings.enabled
-            ? `${pendingCount} pending · ${trimAmount(settings.commissionPercentage)}% default`
-            : 'Programme off'
+            ? `${trimAmount(settings.commissionPercentage)}% suggested on the product subtotal. Every payout is approved by hand.`
+            : 'The programme is switched off. Pending commissions can still be approved.'
         }
-        onMenu={onMenu}
+        actions={
+          <Button variant="outline" icon={Settings} onClick={() => setSettingsOpen(true)}>
+            Programme settings
+          </Button>
+        }
       />
-      <PageBody>
+
+      <div className="mb-5">
         <PillTabs<Tab>
           tabs={[
-            { id: 'pending', label: 'Pending' },
+            { id: 'pending', label: 'Pending', count: pendingCount },
             { id: 'all', label: 'All sales' },
-            { id: 'referrers', label: 'Referrers' },
+            { id: 'referrers', label: 'Referrers', count: referrers.length },
           ]}
           active={tab}
           onSelect={setTab}
         />
+      </div>
 
-        <div className="mt-3">
-          {loading ? (
-            <BrandLoader />
-          ) : error ? (
-            <EmptyBox icon={Share} message={`Could not load referrals: ${error}`} />
-          ) : tab === 'referrers' ? (
-            referrerList()
-          ) : (
-            purchaseList()
-          )}
-        </div>
-      </PageBody>
-
-      <FloatingAction onClick={() => setSettingsOpen(true)} label="Commission settings" icon={Settings} />
+      {tab === 'referrers' ? (
+        <DataTable
+          rows={referrers}
+          columns={referrerColumns}
+          rowKey={r => r.userId}
+          loading={loading}
+          initialSort={{ id: 'earned', dir: 'desc' }}
+          empty={{
+            icon: Trophy,
+            title: error ? 'Could not load referrers' : 'No one has shared yet',
+            description: error ?? 'Customers who share a product link will appear here.',
+          }}
+        />
+      ) : (
+        <DataTable
+          rows={purchases}
+          columns={purchaseColumns}
+          rowKey={p => p.id}
+          loading={loading}
+          initialSort={{ id: 'order', dir: 'desc' }}
+          rowActions={p =>
+            isPendingReferral(p) ? (
+              <div className="flex items-center justify-end gap-2">
+                <Button size="sm" variant="outline" icon={Close} onClick={() => reject(p)}>
+                  Reject
+                </Button>
+                <Button size="sm" variant="primary" icon={Check} onClick={() => setApproving(p)}>
+                  Pay
+                </Button>
+              </div>
+            ) : null
+          }
+          empty={{
+            icon: NavUsers,
+            title: error
+              ? 'Could not load referrals'
+              : tab === 'pending'
+                ? 'No commissions waiting'
+                : 'No referred sales yet',
+            description: error ?? 'Purchases made through a share link appear here for approval.',
+          }}
+        />
+      )}
 
       {settingsOpen && (
         <SettingsDialog
@@ -232,7 +274,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
           }}
         />
       )}
-    </>
+    </PageBody>
   );
 }
 
@@ -268,31 +310,42 @@ function SettingsDialog({
 
   return (
     <Modal
-      title="REFER & EARN"
+      title="Refer & earn"
+      description="The store-wide programme settings."
       icon={Share}
       onClose={onClose}
       actions={
         <>
-          <GhostButton label="Cancel" onClick={onClose} disabled={busy} />
-          <PrimaryButton label="Save" full={false} loading={busy} onClick={save} />
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={busy} onClick={save}>
+            Save
+          </Button>
         </>
       }
     >
-      <ToggleRow label="Programme active" value={enabled} onChange={setEnabled} />
-      <div className="mt-3">
-        <TextInput
-          label="Default commission (%)"
-          value={percentage}
-          onChange={setPercentage}
-          number
-          hint="e.g. 5"
+      <div className="space-y-4">
+        <Switch
+          label="Programme active"
+          description="When off, no new referral earnings are recorded."
+          checked={enabled}
+          onChange={setEnabled}
         />
+        <Input
+          label="Default commission"
+          type="number"
+          hint="%"
+          value={percentage}
+          onChange={e => setPercentage(e.target.value)}
+          placeholder="5"
+        />
+        <NoteBox>
+          {enabled
+            ? 'New referred sales suggest this % of the product subtotal (before GST and delivery). You can still change the amount on each sale before approving.'
+            : 'Turned off: no new referral earnings are recorded and the app stops advertising a commission. Sales already pending stay approvable.'}
+        </NoteBox>
       </div>
-      <NoteBox>
-        {enabled
-          ? 'New referred sales suggest this % of the product subtotal (before GST and delivery). You can still change the amount on each sale before approving.'
-          : 'Turned off: no new referral earnings are recorded and the app stops advertising a commission. Sales already pending stay approvable.'}
-      </NoteBox>
     </Modal>
   );
 }
@@ -316,14 +369,14 @@ function ApproveDialog({
   const [busy, setBusy] = useState(false);
 
   /** A fixed rupee amount overrides the percentage for this one sale. */
-  const computed = (): number => {
+  const payout = (): number => {
     const flat = Number.parseFloat(fixed.trim());
     if (Number.isFinite(flat) && flat > 0) return flat;
     const pct = Number.parseFloat(percentage.trim()) || 0;
     return (purchase.purchaseAmount * pct) / 100;
   };
 
-  const payout = computed();
+  const amount = payout();
 
   const submit = async () => {
     setBusy(true);
@@ -343,50 +396,60 @@ function ApproveDialog({
   };
 
   const row = (label: string, value: string) => (
-    <div className="mb-1.5 flex items-start gap-3">
-      <span className="text-xs text-muted">{label}</span>
-      <span className="ml-auto min-w-0 truncate text-right text-xs font-bold text-ink">{value}</span>
+    <div className="flex items-baseline justify-between gap-6 border-b border-border py-2 last:border-0">
+      <span className="text-[12.5px] text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-right text-[13px] font-medium text-foreground">{value}</span>
     </div>
   );
 
   return (
     <Modal
-      title="PAY COMMISSION"
+      title="Pay commission"
+      description={`To ${purchase.referrerName}.`}
       icon={Share}
       onClose={onClose}
       actions={
         <>
-          <GhostButton label="Cancel" onClick={onClose} disabled={busy} />
-          <PrimaryButton
-            label="Approve & pay"
-            full={false}
-            loading={busy}
-            disabled={payout <= 0}
-            onClick={submit}
-          />
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={busy} disabled={amount <= 0} onClick={submit}>
+            Approve &amp; pay {money(amount)}
+          </Button>
         </>
       }
     >
-      {row('Referrer', purchase.referrerName)}
-      {row('Bought by', purchase.referredUserName ?? '—')}
-      {purchase.productName && row('Product', purchase.productName)}
-      {row('Order', purchase.orderNumber ?? purchase.orderId)}
-      {row('Order value', money(purchase.purchaseAmount))}
+      <div className="mb-5">
+        <SectionHeading title="The sale" />
+        {row('Bought by', purchase.referredUserName ?? '—')}
+        {purchase.productName && row('Product', purchase.productName)}
+        {row('Order', purchase.orderNumber ?? purchase.orderId)}
+        {row('Order value', money(purchase.purchaseAmount))}
+      </div>
 
-      <div className="mt-3">
-        <TextInput label="Commission (%)" value={percentage} onChange={setPercentage} number />
-        <TextInput
-          label="Or fixed amount (₹)"
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Commission"
+          type="number"
+          hint="%"
+          value={percentage}
+          onChange={e => setPercentage(e.target.value)}
+        />
+        <Input
+          label="Or a fixed amount"
+          type="number"
+          hint="₹"
           value={fixed}
-          onChange={setFixed}
-          number
-          hint="Optional — overrides the %"
+          onChange={e => setFixed(e.target.value)}
+          description="Overrides the percentage."
         />
       </div>
 
-      <NoteBox>
-        {money(payout)} will be credited to {purchase.referrerName}&apos;s wallet straight away.
-      </NoteBox>
+      <div className="mt-4">
+        <NoteBox>
+          {money(amount)} will be credited to {purchase.referrerName}&apos;s wallet straight away.
+        </NoteBox>
+      </div>
     </Modal>
   );
 }

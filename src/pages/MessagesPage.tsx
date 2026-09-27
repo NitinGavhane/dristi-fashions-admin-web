@@ -6,29 +6,22 @@
  * mailbox, so this screen is the delivery route.
  */
 import { useCallback, useState } from 'react';
-import { AtSign, Copy, Mail, MailOpen, Trash } from '../components/icons';
+import { AtSign, Copy, Mail, MailOpen, MoreHorizontal, Trash } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { whenLocal } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
-import type { ContactMessage } from '../types';
+import type { ContactMessage, NewsletterSubscriber } from '../types';
 import { useConfirm, useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
-import {
-  BrandLoader,
-  EmptyBox,
-  FloatingAction,
-  ListCard,
-  Modal,
-  PageHeader,
-  PillTabs,
-  PrimaryButton,
-} from '../components/ui';
+import { PageBody, PageHeader } from '../components/AdminShell';
+import { DataTable, type Column } from '../components/DataTable';
+import { Badge, Button, DropdownMenu, MenuItem } from '../components/primitives';
+import { Modal, PillTabs } from '../components/ui';
 import type { PageProps } from './types';
 
 type Tab = 'enquiries' | 'subscribers';
 
-/** Clipboard writes need a user gesture and can still be blocked; report either way. */
+/** Clipboard writes need a user gesture and can still be blocked. */
 async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
@@ -38,7 +31,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-export function MessagesPage({ onMenu }: PageProps) {
+export function MessagesPage(_: PageProps) {
   const [tab, setTab] = useState<Tab>('enquiries');
   const toast = useToast();
   const confirm = useConfirm();
@@ -91,103 +84,140 @@ export function MessagesPage({ onMenu }: PageProps) {
     });
   };
 
-  const enquiryList = () => {
-    if (messages.length === 0) {
-      return <EmptyBox icon={MailOpen} message="No enquiries from the website yet" />;
-    }
-    return messages.map(m => (
-      <ListCard key={m.id} className="mb-2.5">
-        <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={() => openMessage(m)}
-            className="flex min-w-0 flex-1 items-start gap-3 text-left"
-          >
-            <span
-              className="mt-1.5 block size-2.5 shrink-0 rounded-full"
-              style={{
-                backgroundColor: m.isRead ? 'transparent' : 'var(--color-accent)',
-                border: m.isRead ? '1px solid var(--color-hair)' : undefined,
-              }}
-            />
-            <span className="min-w-0 flex-1">
-              <span className={`block truncate text-sm text-ink ${m.isRead ? 'font-semibold' : 'font-extrabold'}`}>
-                {m.fullName}
-              </span>
-              <span className="mt-0.5 block truncate text-xs text-ink-soft">{m.subject || m.message}</span>
-              <span className="mt-1 block truncate text-[11px] text-muted">
-                {m.email} · {whenLocal(m.createdAt)}
-              </span>
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => remove(m)}
-            aria-label={`Delete enquiry from ${m.fullName}`}
-            className="grid size-9 shrink-0 place-items-center rounded-lg border border-error text-error transition hover:bg-error/5"
-          >
-            <Trash size={15} />
-          </button>
+  const messageColumns: Column<ContactMessage>[] = [
+    {
+      id: 'from',
+      header: 'From',
+      sortValue: m => m.fullName,
+      cell: m => (
+        <div className="flex items-center gap-2.5">
+          {!m.isRead && <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" />}
+          <div className="min-w-0">
+            <p className={`truncate text-foreground ${m.isRead ? 'font-normal' : 'font-semibold'}`}>
+              {m.fullName}
+            </p>
+            <p className="truncate text-[12px] text-muted-foreground">{m.email}</p>
+          </div>
         </div>
-      </ListCard>
-    ));
-  };
+      ),
+    },
+    {
+      id: 'subject',
+      header: 'Subject',
+      sortValue: m => m.subject ?? m.message,
+      cell: m => (
+        <p className="truncate text-muted-foreground">{m.subject || m.message}</p>
+      ),
+    },
+    {
+      id: 'received',
+      header: 'Received',
+      align: 'right',
+      secondary: true,
+      sortValue: m => m.createdAt ?? '',
+      cell: m => <span className="text-muted-foreground">{whenLocal(m.createdAt)}</span>,
+    },
+  ];
 
-  const subscriberList = () => {
-    if (subscribers.length === 0) return <EmptyBox icon={AtSign} message="No newsletter signups yet" />;
-    return subscribers.map(s => (
-      <ListCard key={s.id} className="mb-2.5">
-        <div className="flex items-center gap-3">
-          <span className="shrink-0 text-accent">
-            <AtSign size={17} />
+  const subscriberColumns: Column<NewsletterSubscriber>[] = [
+    {
+      id: 'email',
+      header: 'Email',
+      sortValue: s => s.email,
+      cell: s => (
+        <div className="flex items-center gap-2.5">
+          <span className="text-subtle-foreground">
+            <AtSign size={14} />
           </span>
-          <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{s.email}</p>
-          <p className="shrink-0 text-[11px] text-muted">{whenLocal(s.createdAt)}</p>
+          <span className="truncate text-foreground">{s.email}</span>
         </div>
-      </ListCard>
-    ));
-  };
+      ),
+    },
+    {
+      id: 'joined',
+      header: 'Subscribed',
+      align: 'right',
+      sortValue: s => s.createdAt ?? '',
+      cell: s => <span className="text-muted-foreground">{whenLocal(s.createdAt)}</span>,
+    },
+  ];
 
   return (
-    <>
+    <PageBody>
       <PageHeader
         title="Messages"
-        subtitle={
-          unread > 0
-            ? `${unread} unread · ${subscribers.length} subscribers`
-            : `${messages.length} enquiries · ${subscribers.length} subscribers`
+        description="Enquiries from the website's contact form, and newsletter signups."
+        actions={
+          tab === 'subscribers' && subscribers.length > 0 ? (
+            <Button variant="outline" icon={Copy} onClick={copyAll}>
+              Copy all addresses
+            </Button>
+          ) : undefined
         }
-        onMenu={onMenu}
       />
-      <PageBody>
+
+      <div className="mb-5">
         <PillTabs<Tab>
           tabs={[
-            { id: 'enquiries', label: 'Enquiries' },
-            { id: 'subscribers', label: 'Subscribers' },
+            { id: 'enquiries', label: 'Enquiries', count: unread || messages.length },
+            { id: 'subscribers', label: 'Subscribers', count: subscribers.length },
           ]}
           active={tab}
           onSelect={setTab}
         />
+      </div>
 
-        <div className="mt-3">
-          {loading ? (
-            <BrandLoader />
-          ) : error ? (
-            <EmptyBox icon={Mail} message={`Could not load messages: ${error}`} />
-          ) : tab === 'subscribers' ? (
-            subscriberList()
-          ) : (
-            enquiryList()
+      {tab === 'enquiries' ? (
+        <DataTable
+          rows={messages}
+          columns={messageColumns}
+          rowKey={m => m.id}
+          loading={loading}
+          onRowClick={openMessage}
+          initialSort={{ id: 'received', dir: 'desc' }}
+          rowActions={m => (
+            <DropdownMenu
+              label={`Actions for the enquiry from ${m.fullName}`}
+              trigger={
+                <span className="grid size-8 place-items-center rounded-lg text-subtle-foreground transition-colors duration-150 hover:bg-hover hover:text-foreground">
+                  <MoreHorizontal size={16} />
+                </span>
+              }
+            >
+              <MenuItem icon={MailOpen} onSelect={() => openMessage(m)}>
+                Read
+              </MenuItem>
+              <MenuItem icon={Copy} onSelect={() => copyToClipboard(m.email)}>
+                Copy email
+              </MenuItem>
+              <MenuItem icon={Trash} destructive onSelect={() => remove(m)}>
+                Delete
+              </MenuItem>
+            </DropdownMenu>
           )}
-        </div>
-      </PageBody>
-
-      {tab === 'subscribers' && subscribers.length > 0 && (
-        <FloatingAction onClick={copyAll} label="Copy all email addresses" icon={Copy} />
+          empty={{
+            icon: MailOpen,
+            title: error ? 'Could not load messages' : 'No enquiries yet',
+            description: error ?? 'Messages sent from the website contact form land here.',
+          }}
+        />
+      ) : (
+        <DataTable
+          rows={subscribers}
+          columns={subscriberColumns}
+          rowKey={s => s.id}
+          loading={loading}
+          initialSort={{ id: 'joined', dir: 'desc' }}
+          empty={{
+            icon: AtSign,
+            title: 'No newsletter signups yet',
+            description: "Addresses captured by the footer's subscribe box land here.",
+          }}
+        />
       )}
 
       {open && <MessageDialog message={open} onClose={() => setOpen(null)} />}
-    </>
+    </PageBody>
   );
 }
 
@@ -202,37 +232,30 @@ function MessageDialog({ message, onClose }: { message: ContactMessage; onClose:
     });
   };
 
-  const row = (label: string, value: string) => (
-    <div className="mb-1.5 flex items-start gap-3">
-      <span className="w-[74px] shrink-0 text-xs text-muted">{label}</span>
-      <span className="min-w-0 flex-1 text-[12.5px] font-semibold text-ink">{value}</span>
-    </div>
-  );
-
   return (
     <Modal
       title={message.subject || 'Enquiry'}
+      description={`${message.fullName} · ${whenLocal(message.createdAt)}`}
       icon={Mail}
       onClose={onClose}
+      wide
       actions={
         <>
-          <button
-            type="button"
-            onClick={copyEmail}
-            className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-[11px] text-muted transition hover:text-ink"
-          >
-            <Copy size={15} />
-            COPY EMAIL
-          </button>
-          <PrimaryButton label="Close" full={false} onClick={onClose} />
+          <Button variant="outline" icon={Copy} onClick={copyEmail}>
+            Copy email
+          </Button>
+          <Button variant="primary" onClick={onClose}>
+            Close
+          </Button>
         </>
       }
     >
-      {row('From', message.fullName)}
-      {row('Email', message.email)}
-      {row('Received', whenLocal(message.createdAt))}
-      <div className="mt-3.5 rounded-lg border border-hair bg-white/[0.03] p-3.5">
-        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink">{message.message}</p>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Badge>{message.email}</Badge>
+        {!message.isRead && <Badge color="var(--color-primary)">New</Badge>}
+      </div>
+      <div className="rounded-lg border border-border bg-hover/50 p-4">
+        <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-foreground">{message.message}</p>
       </div>
     </Modal>
   );

@@ -4,20 +4,13 @@
  * The code is upper-cased on save, as the Flutter form does.
  */
 import { useEffect, useState } from 'react';
-import { Gift } from '../components/icons';
+import { ArrowLeft } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
-import {
-  BrandLoader,
-  FormSection,
-  PageHeader,
-  PrimaryButton,
-  Select,
-  TextInput,
-  ToggleRow,
-} from '../components/ui';
+import { FormBody, PageHeader, StickyActions } from '../components/AdminShell';
+import { Button, Card, CardContent, CardHeader, Input, Select, Switch } from '../components/primitives';
+import { BrandLoader } from '../components/ui';
 import type { DetailPageProps } from './types';
 
 export function CouponFormPage({ couponId, onBack }: DetailPageProps & { couponId: string | null }) {
@@ -95,60 +88,110 @@ export function CouponFormPage({ couponId, onBack }: DetailPageProps & { couponI
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <PageHeader title={isEdit ? 'Edit Coupon' : 'New Coupon'} onBack={onBack} />
-        <BrandLoader />
-      </>
-    );
-  }
+  if (loading) return <BrandLoader />;
 
   return (
-    <>
-      <PageHeader title={isEdit ? 'Edit Coupon' : 'New Coupon'} onBack={onBack} />
-      <PageBody className="space-y-4">
-        <FormSection title="Coupon Details">
-          <TextInput label="Coupon Code" value={code} onChange={setCode} required error={errors.code} />
-          <Select
-            label="Type"
-            value={type}
-            options={[
-              { value: 'percentage', label: 'Percentage' },
-              { value: 'fixed', label: 'Fixed' },
-            ]}
-            onChange={setType}
-          />
-          <TextInput
-            label="Value"
-            value={value}
-            onChange={setValue}
-            number
-            required
-            error={errors.value}
-            hint={type === 'percentage' ? 'e.g. 10' : 'e.g. 50'}
-          />
-          <div className="grid gap-x-3 sm:grid-cols-2">
-            <TextInput label="Min Order" value={minOrder} onChange={setMinOrder} number />
-            <TextInput label="Max Discount" value={maxDiscount} onChange={setMaxDiscount} number />
-          </div>
-        </FormSection>
+    <FormBody>
+      <PageHeader
+        title={isEdit ? 'Edit coupon' : 'New coupon'}
+        description="Discount codes customers can apply at checkout."
+        actions={
+          <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+            Back
+          </Button>
+        }
+      />
 
-        <FormSection title="Limits">
-          <TextInput label="Expiry" value={expiry} onChange={setExpiry} hint="2026-12-31T23:59:59" />
-          <TextInput label="Usage Limit" value={usageLimit} onChange={setUsageLimit} number />
-          <ToggleRow label="Active" value={active} onChange={setActive} />
-        </FormSection>
+      <div className="space-y-5">
+        <Card>
+          <CardHeader title="Discount" description="What the code is worth and how it applies." />
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Code"
+              required
+              value={code}
+              onChange={e => setCode(e.target.value)}
+              error={errors.code}
+              placeholder="FESTIVE20"
+              description="Saved in upper case."
+              className="font-mono uppercase"
+            />
+            <Select
+              label="Type"
+              value={type}
+              onChange={e => setType(e.target.value)}
+              options={[
+                { value: 'percentage', label: 'Percentage off' },
+                { value: 'fixed', label: 'Fixed amount off' },
+              ]}
+            />
+            <Input
+              label="Value"
+              required
+              type="number"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              error={errors.value}
+              hint={type === 'percentage' ? '%' : '₹'}
+              placeholder={type === 'percentage' ? '10' : '50'}
+            />
+            <Input
+              label="Maximum discount"
+              type="number"
+              value={maxDiscount}
+              onChange={e => setMaxDiscount(e.target.value)}
+              hint="₹"
+              description="Caps a percentage discount. Leave blank for no cap."
+            />
+          </CardContent>
+        </Card>
 
-        <div className="pt-4">
-          <PrimaryButton
-            label={isEdit ? 'Update Coupon' : 'Create Coupon'}
-            loading={saving}
-            onClick={save}
-            icon={Gift}
-          />
-        </div>
-      </PageBody>
-    </>
+        <Card>
+          <CardHeader title="Limits" description="When and how often the code can be used." />
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Minimum order"
+              type="number"
+              value={minOrder}
+              onChange={e => setMinOrder(e.target.value)}
+              hint="₹"
+              description="Subtotal the code needs to unlock."
+            />
+            <Input
+              label="Usage limit"
+              type="number"
+              value={usageLimit}
+              onChange={e => setUsageLimit(e.target.value)}
+              description="Total redemptions allowed."
+            />
+            <Input
+              label="Expires"
+              value={expiry}
+              onChange={e => setExpiry(e.target.value)}
+              placeholder="2026-12-31T23:59:59"
+              description="ISO timestamp. Leave blank for no expiry."
+              className="sm:col-span-2"
+            />
+            <div className="sm:col-span-2">
+              <Switch
+                label="Active"
+                description="Inactive codes are rejected at checkout but keep their history."
+                checked={active}
+                onChange={setActive}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <StickyActions>
+        <Button variant="ghost" onClick={onBack} disabled={saving}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={save} loading={saving}>
+          {isEdit ? 'Save changes' : 'Create coupon'}
+        </Button>
+      </StickyActions>
+    </FormBody>
   );
 }

@@ -6,23 +6,15 @@
  * offered — both admin configuration, never shown to buyers.
  */
 import { useEffect, useState } from 'react';
-import { Wallet } from '../components/icons';
+import { ArrowLeft } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise } from '../lib/format';
 import { GATEWAY_OPTIONS } from '../types';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
-import {
-  BrandLoader,
-  FormSection,
-  HelpBox,
-  PageHeader,
-  PrimaryButton,
-  Select,
-  TextInput,
-  ToggleRow,
-} from '../components/ui';
+import { FormBody, PageHeader, StickyActions } from '../components/AdminShell';
+import { Button, Card, CardContent, CardHeader, Input, Select, Switch } from '../components/primitives';
+import { BrandLoader, HelpBox } from '../components/ui';
 import type { DetailPageProps } from './types';
 
 export function PaymentMethodFormPage({
@@ -102,37 +94,51 @@ export function PaymentMethodFormPage({
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <PageHeader title={isEdit ? 'Edit Payment Method' : 'New Payment Method'} onBack={onBack} />
-        <BrandLoader />
-      </>
-    );
-  }
+  if (loading) return <BrandLoader />;
 
   return (
-    <>
-      <PageHeader title={isEdit ? 'Edit Payment Method' : 'New Payment Method'} onBack={onBack} />
-      <PageBody className="space-y-4">
-        <FormSection title="What the customer sees">
-          <TextInput label="Display Name" value={name} onChange={setName} required hint="e.g. UPI" error={errors.name} />
-          <TextInput
-            label="Description"
-            value={description}
-            onChange={setDescription}
-            hint="e.g. Pay using any UPI app"
-          />
-          <TextInput
-            label="Icon URL"
-            value={iconUrl}
-            onChange={setIconUrl}
-            hint="Optional — a built-in icon is used when empty"
-          />
-        </FormSection>
+    <FormBody>
+      <PageHeader
+        title={isEdit ? 'Edit payment method' : 'New payment method'}
+        description="What buyers can pay with, and how it settles."
+        actions={
+          <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+            Back
+          </Button>
+        }
+      />
 
-        <FormSection title="Configuration">
-          <div className="mb-3">
+      <div className="space-y-5">
+        <Card>
+          <CardHeader title="What the customer sees" description="Shown on the checkout screen." />
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Display name"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              error={errors.name}
+              placeholder="UPI"
+            />
+            <Input
+              label="Icon URL"
+              value={iconUrl}
+              onChange={e => setIconUrl(e.target.value)}
+              description="Optional — a built-in icon is used when empty."
+            />
+            <Input
+              label="Description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Pay using any UPI app"
+              className="sm:col-span-2"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader title="Configuration" description="How the gateway is told to open checkout." />
+          <CardContent className="space-y-4">
             <HelpBox
               lines={[
                 "Code must match the gateway's own method name — upi, card, netbanking or wallet. It opens the checkout on that method.",
@@ -140,35 +146,56 @@ export function PaymentMethodFormPage({
                 'Lower sort order appears first at checkout.',
               ]}
             />
-          </div>
-          <TextInput
-            label="Code"
-            value={code}
-            onChange={setCode}
-            required
-            hint="upi / card / netbanking / wallet"
-            error={errors.code}
-          />
-          <Select
-            label="Gateway"
-            value={gateway}
-            options={GATEWAY_OPTIONS.map(g => ({ value: g, label: capitalise(g) }))}
-            onChange={setGateway}
-          />
-          <TextInput label="Regions" value={regions} onChange={setRegions} hint="* or IN,AE" />
-          <TextInput label="Sort Order" value={sortOrder} onChange={setSortOrder} number hint="0 = first" />
-          <ToggleRow label="Active" value={active} onChange={setActive} />
-        </FormSection>
 
-        <div className="pt-4">
-          <PrimaryButton
-            label={isEdit ? 'Update Method' : 'Create Method'}
-            loading={saving}
-            onClick={save}
-            icon={Wallet}
-          />
-        </div>
-      </PageBody>
-    </>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Code"
+                required
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                error={errors.code}
+                placeholder="upi"
+                className="font-mono"
+              />
+              <Select
+                label="Gateway"
+                value={gateway}
+                onChange={e => setGateway(e.target.value)}
+                options={GATEWAY_OPTIONS.map(g => ({ value: g, label: capitalise(g) }))}
+              />
+              <Input
+                label="Regions"
+                value={regions}
+                onChange={e => setRegions(e.target.value)}
+                placeholder="* or IN,AE"
+              />
+              <Input
+                label="Sort order"
+                type="number"
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value)}
+                description="0 shows first."
+              />
+            </div>
+
+            <Switch
+              label="Active"
+              description="Inactive methods are hidden at checkout without being deleted."
+              checked={active}
+              onChange={setActive}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      <StickyActions>
+        <Button variant="ghost" onClick={onBack} disabled={saving}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={save} loading={saving}>
+          {isEdit ? 'Save changes' : 'Create method'}
+        </Button>
+      </StickyActions>
+    </FormBody>
   );
 }

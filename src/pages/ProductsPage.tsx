@@ -1,31 +1,23 @@
 /**
- * Catalogue list — a port of dristi-admin-app/lib/screens/products_screen.dart.
+ * Catalogue — a port of dristi-admin-app/lib/screens/products_screen.dart,
+ * rebuilt as a data table.
  *
  * The gender chip is a server-side filter (it re-queries with `?gender=`) and
  * also filters locally, exactly as the Flutter screen does; the search box is
  * debounced client-side over title and SKU.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Package, Plus } from '../components/icons';
+import { MoreHorizontal, Package, Pencil, Plus, Trash } from '../components/icons';
 import * as api from '../lib/api';
 import { capitalise, imageUrl, money } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { errorMessage } from '../lib/apiClient';
 import { useConfirm, useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
-import {
-  BrandLoader,
-  DeleteButton,
-  EditButton,
-  EmptyBox,
-  FilterChips,
-  FloatingAction,
-  ListCard,
-  PageHeader,
-  SafeImage,
-  SearchInput,
-  Tag,
-} from '../components/ui';
+import { PageBody, PageHeader, Toolbar } from '../components/AdminShell';
+import { DataTable, type Column } from '../components/DataTable';
+import { Badge, Button, DropdownMenu, MenuItem } from '../components/primitives';
+import { FilterChips, SafeImage, SearchInput } from '../components/ui';
+import type { AdminProduct } from '../types';
 import type { PageProps } from './types';
 
 const GENDER_FILTERS = [
@@ -35,7 +27,7 @@ const GENDER_FILTERS = [
   { value: 'kids', label: 'Kids' },
 ];
 
-export function ProductsPage({ onNavigate, onMenu }: PageProps) {
+export function ProductsPage({ onNavigate }: PageProps) {
   const [gender, setGender] = useState('');
   const [rawQuery, setRawQuery] = useState('');
   const [query, setQuery] = useState('');
@@ -54,7 +46,7 @@ export function ProductsPage({ onNavigate, onMenu }: PageProps) {
   }, [rawQuery]);
 
   const products = data ?? [];
-  const filtered = useMemo(() => {
+  const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return products.filter(p => {
       if (q && !p.title.toLowerCase().includes(q) && !p.sku.toLowerCase().includes(q)) return false;
@@ -63,11 +55,11 @@ export function ProductsPage({ onNavigate, onMenu }: PageProps) {
     });
   }, [products, query, gender]);
 
-  const remove = async (id: string, title: string) => {
-    const ok = await confirm({ message: `Remove "${title}"?` });
+  const remove = async (product: AdminProduct) => {
+    const ok = await confirm({ message: `Remove "${product.title}"?` });
     if (!ok) return;
     try {
-      await api.deleteProduct(id);
+      await api.deleteProduct(product.id);
       toast('Product removed', { success: true });
       reload();
     } catch (e) {
@@ -75,71 +67,174 @@ export function ProductsPage({ onNavigate, onMenu }: PageProps) {
     }
   };
 
-  return (
-    <>
-      <PageHeader title="Products" subtitle={`${products.length} items`} onMenu={onMenu} />
-      <PageBody>
-        <SearchInput hint="Search products by title or SKU" value={rawQuery} onChange={setRawQuery} />
-        <div className="mt-3">
-          <FilterChips options={GENDER_FILTERS} active={gender} onSelect={setGender} />
-        </div>
+  const removeMany = async (selected: AdminProduct[], clear: () => void) => {
+    const ok = await confirm({
+      message: `Remove ${selected.length} products? This cannot be undone.`,
+      confirmLabel: `Remove ${selected.length}`,
+    });
+    if (!ok) return;
+    // Sequential, not Promise.all: a burst of deletes against the admin API is
+    // the kind of thing that trips a rate limit and half-succeeds.
+    let removed = 0;
+    for (const product of selected) {
+      try {
+        await api.deleteProduct(product.id);
+        removed += 1;
+      } catch (e) {
+        toast(`${product.title}: ${errorMessage(e)}`, { error: true });
+        break;
+      }
+    }
+    if (removed) toast(`${removed} product${removed === 1 ? '' : 's'} removed`, { success: true });
+    clear();
+    reload();
+  };
 
-        <div className="mt-3 space-y-2.5">
-          {loading ? (
-            <BrandLoader />
-          ) : error ? (
-            <EmptyBox icon={Package} message={error} />
-          ) : filtered.length === 0 ? (
-            <EmptyBox icon={Package} message="No products yet" />
-          ) : (
-            filtered.map(p => (
-              <ListCard key={p.id}>
-                <div className="flex items-start gap-3.5">
-                  <SafeImage
-                    src={imageUrl(p.primaryImage)}
-                    alt=""
-                    className="size-[60px] shrink-0 rounded-2xl border border-hair object-cover"
-                    fallback={<Package size={24} />}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-ink">{p.title}</p>
-                    <span className="mt-1 inline-block rounded border border-hair bg-white/[0.03] px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.8px] text-muted">
-                      SKU: {p.sku}
-                    </span>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                      {p.discountPrice != null ? (
-                        <>
-                          <span className="text-base font-black text-accent">{money(p.discountPrice)}</span>
-                          <span className="text-xs text-muted line-through">{money(p.price)}</span>
-                        </>
-                      ) : (
-                        <span className="text-base font-black text-accent">{money(p.price)}</span>
-                      )}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {p.featured && <Tag text="Featured" color="var(--color-amber)" filled />}
-                      {p.gender && <Tag text={capitalise(p.gender)} color="var(--color-accent)" />}
-                      {p.isReplaceable && <Tag text="Replace" color="var(--color-accent)" />}
-                      {p.isReturnable && <Tag text="Return" color="var(--color-accent)" />}
-                      {!p.isActive && <Tag text="Inactive" color="var(--color-error)" filled />}
-                      {p.categoryName && <Tag text={p.categoryName} color="var(--color-muted)" />}
-                      <Tag
-                        text={`Stock: ${p.stock}`}
-                        color={p.stock > 5 ? 'var(--color-success)' : 'var(--color-error)'}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-1.5">
-                    <EditButton onClick={() => onNavigate(`/products/${p.id}`)} label={`Edit ${p.title}`} />
-                    <DeleteButton onClick={() => remove(p.id, p.title)} label={`Delete ${p.title}`} />
-                  </div>
-                </div>
-              </ListCard>
-            ))
+  const columns: Column<AdminProduct>[] = [
+    {
+      id: 'title',
+      header: 'Product',
+      sortValue: p => p.title,
+      cell: p => (
+        <div className="flex items-center gap-3">
+          <SafeImage
+            src={imageUrl(p.primaryImage)}
+            alt=""
+            className="size-9 shrink-0 rounded-lg border border-border object-cover"
+            fallback={<Package size={15} />}
+          />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{p.title}</p>
+            <p className="truncate font-mono text-[11.5px] text-subtle-foreground">{p.sku}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'category',
+      header: 'Category',
+      secondary: true,
+      sortValue: p => p.categoryName ?? '',
+      cell: p => <span className="text-muted-foreground">{p.categoryName ?? '—'}</span>,
+    },
+    {
+      id: 'gender',
+      header: 'Gender',
+      secondary: true,
+      sortValue: p => p.gender ?? '',
+      cell: p =>
+        p.gender ? <Badge>{capitalise(p.gender)}</Badge> : <span className="text-subtle-foreground">—</span>,
+    },
+    {
+      id: 'price',
+      header: 'Price',
+      align: 'right',
+      sortValue: p => p.discountPrice ?? p.price,
+      cell: p => (
+        <div className="tnum">
+          <span className="font-medium text-foreground">{money(p.discountPrice ?? p.price)}</span>
+          {p.discountPrice != null && (
+            <span className="ml-2 text-[12px] text-subtle-foreground line-through">{money(p.price)}</span>
           )}
         </div>
-      </PageBody>
-      <FloatingAction onClick={() => onNavigate('/products/new')} label="Add product" icon={Plus} />
-    </>
+      ),
+    },
+    {
+      id: 'stock',
+      header: 'Stock',
+      align: 'right',
+      sortValue: p => p.stock,
+      cell: p => (
+        <span
+          className="tnum font-medium"
+          style={{ color: p.stock > 5 ? 'var(--color-foreground)' : 'var(--color-destructive)' }}
+        >
+          {p.stock}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      sortValue: p => (p.isActive ? 'active' : 'inactive'),
+      cell: p => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="dot" color={p.isActive ? 'var(--color-success)' : 'var(--color-subtle-foreground)'}>
+            {p.isActive ? 'Active' : 'Inactive'}
+          </Badge>
+          {p.featured && <Badge color="var(--color-amber)">Featured</Badge>}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <PageBody>
+      <PageHeader
+        title="Products"
+        description={`${products.length} item${products.length === 1 ? '' : 's'} in the catalogue.`}
+        actions={
+          <Button variant="primary" icon={Plus} onClick={() => onNavigate('/products/new')}>
+            New product
+          </Button>
+        }
+      />
+
+      <Toolbar>
+        <SearchInput
+          hint="Search by title or SKU..."
+          value={rawQuery}
+          onChange={setRawQuery}
+          className="w-full sm:w-72"
+        />
+        <FilterChips options={GENDER_FILTERS} active={gender} onSelect={setGender} />
+        {rows.length !== products.length && (
+          <span className="text-[12.5px] text-muted-foreground">
+            {rows.length} of {products.length} shown
+          </span>
+        )}
+      </Toolbar>
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={p => p.id}
+        loading={loading}
+        onRowClick={p => onNavigate(`/products/${p.id}`)}
+        initialSort={{ id: 'title', dir: 'asc' }}
+        rowActions={p => (
+          <DropdownMenu
+            label={`Actions for ${p.title}`}
+            trigger={
+              <span className="grid size-8 place-items-center rounded-lg text-subtle-foreground transition-colors duration-150 hover:bg-hover hover:text-foreground">
+                <MoreHorizontal size={16} />
+              </span>
+            }
+          >
+            <MenuItem icon={Pencil} onSelect={() => onNavigate(`/products/${p.id}`)}>
+              Edit
+            </MenuItem>
+            <MenuItem icon={Trash} destructive onSelect={() => remove(p)}>
+              Delete
+            </MenuItem>
+          </DropdownMenu>
+        )}
+        bulkActions={(selected, clear) => (
+          <Button size="sm" variant="destructive" icon={Trash} onClick={() => removeMany(selected, clear)}>
+            Delete
+          </Button>
+        )}
+        empty={{
+          icon: Package,
+          title: error ? 'Could not load products' : 'No products yet',
+          description: error ?? 'Add your first catalogue item to get started.',
+          action: error ? undefined : (
+            <Button variant="primary" icon={Plus} onClick={() => onNavigate('/products/new')}>
+              New product
+            </Button>
+          ),
+        }}
+      />
+    </PageBody>
   );
 }

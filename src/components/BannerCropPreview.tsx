@@ -62,26 +62,26 @@ export function BannerCropPreview({ imageUrl }: { imageUrl: string }) {
   const hasImage = imageUrl.trim().length > 0;
 
   return (
-    <div className="rounded-2xl border border-hair bg-surface p-3">
+    <div className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-center gap-2">
-        <span className="text-accent">
+        <span className="text-primary">
           <Scissors size={16} />
         </span>
-        <p className="text-[13px] font-semibold text-ink">How your banner is cropped</p>
+        <p className="text-[13px] font-semibold text-foreground">How your banner is cropped</p>
       </div>
-      <p className="mt-1 text-xs leading-relaxed text-muted">
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
         The same image feeds the App slider and the Website hero, sized differently on each. What&apos;s shown
         below is exactly the crop each device would apply. Keep text, faces and products inside the highlighted
         centre area.
       </p>
 
       {!hasImage ? (
-        <div className="mt-3 grid place-items-center rounded-lg border border-hair bg-raised px-4 py-6 text-muted">
+        <div className="mt-3 grid place-items-center rounded-lg border border-border bg-card-raised px-4 py-6 text-muted-foreground">
           <ImagePlus size={28} />
           <p className="mt-2 text-[12.5px]">Upload an image to preview the crop</p>
         </div>
       ) : state.status === 'decoding' ? (
-        <div className="mt-3 grid place-items-center py-5 text-accent">
+        <div className="mt-3 grid place-items-center py-5 text-primary">
           <Spinner size={18} className="animate-spin" />
         </div>
       ) : state.status === 'done' ? (
@@ -105,7 +105,7 @@ export function BannerCropPreview({ imageUrl }: { imageUrl: string }) {
           </div>
         </>
       ) : (
-        <div className="mt-3 flex items-center justify-center gap-2 py-5 text-muted">
+        <div className="mt-3 flex items-center justify-center gap-2 py-5 text-muted-foreground">
           <ImageOff size={16} />
           <p className="text-[12.5px]">Couldn&apos;t read the image dimensions.</p>
         </div>
@@ -120,11 +120,11 @@ function DimensionNote({ size }: { size: Dimensions }) {
     ratio < PHONE_RATIO ? 'taller than recommended' : ratio <= WEB_RATIO ? 'a good match' : 'wider than recommended';
 
   return (
-    <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-accent/25 bg-accent/5 px-2.5 py-2">
-      <span className="shrink-0 text-accent">
+    <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-2">
+      <span className="shrink-0 text-primary">
         <Settings size={15} />
       </span>
-      <p className="text-xs text-ink-soft">
+      <p className="text-xs text-muted-foreground-foreground">
         Your image: {Math.round(size.width)} × {Math.round(size.height)} px ({match}). Recommended: 1920 × 1080 px
         (16:9) or wider.
       </p>
@@ -166,10 +166,10 @@ function SurfaceFrame({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <p className="flex-1 text-[12.5px] font-semibold text-ink-soft">{label}</p>
-        <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-semibold text-muted">{ratioLabel}</span>
+        <p className="flex-1 text-[12.5px] font-semibold text-muted-foreground-foreground">{label}</p>
+        <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">{ratioLabel}</span>
       </div>
-      <div className="relative mt-2 overflow-hidden rounded-lg bg-raised" style={{ aspectRatio: ratio }}>
+      <div className="relative mt-2 overflow-hidden rounded-lg bg-card-raised" style={{ aspectRatio: ratio }}>
         <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
         <SafeZoneOverlay />
         <div className="absolute inset-x-2 bottom-1.5 flex justify-center">

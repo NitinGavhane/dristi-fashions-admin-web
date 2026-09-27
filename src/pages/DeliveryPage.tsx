@@ -1,49 +1,53 @@
 /**
- * Delivery dashboard — a port of dristi-admin-app/lib/screens/delivery_screen.dart.
+ * Delivery — a port of dristi-admin-app/lib/screens/delivery_screen.dart.
  *
  * Orders awaiting dispatch and parcels in transit. Dispatch issues a delivery
- * OTP for the operator to relay to the customer; verifying that OTP marks the
- * order delivered.
+ * OTP for the operator to relay; verifying that OTP marks the order delivered.
  */
 import { useState } from 'react';
-import { BadgeCheck, ExternalLink, Refresh, ShieldCheck, Truck } from '../components/icons';
+import {
+  BadgeCheck,
+  ExternalLink,
+  MoreHorizontal,
+  Refresh,
+  ShieldCheck,
+  Truck,
+} from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
-import { money, orderStatusColor, orderStatusLabel } from '../lib/format';
+import { money, orderStatusColor, orderStatusLabel, whenLocal } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
 import { inTransit, needsDispatch, type DispatchResult, type FulfillmentOrder } from '../types';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
+import { PageBody, PageHeader } from '../components/AdminShell';
+import { DataTable, type Column } from '../components/DataTable';
 import {
-  BrandLoader,
-  EmptyBox,
-  GhostButton,
-  ListCard,
-  Modal,
-  OtpDisplay,
-  OtpInput,
-  PageHeader,
-  PrimaryButton,
-  SectionLabel,
-  Tag,
-} from '../components/ui';
+  Badge,
+  Button,
+  DropdownMenu,
+  MenuItem,
+  SectionHeading,
+} from '../components/primitives';
+import { Modal, OtpDisplay, OtpInput, PillTabs } from '../components/ui';
 import type { PageProps } from './types';
 
-export function DeliveryPage({ onMenu }: PageProps) {
+type Tab = 'dispatch' | 'transit';
+
+export function DeliveryPage(_: PageProps) {
   const { data, loading, error, reload } = useAsync(() => api.getDeliveryOrders(), []);
   const toast = useToast();
 
-  /** orderId -> live ShipRocket status string (from the tracking endpoint). */
+  const [tab, setTab] = useState<Tab>('dispatch');
+  /** orderId -> live ShipRocket status from the tracking endpoint. */
   const [liveStatus, setLiveStatus] = useState<Record<string, string>>({});
-  /** orderId set while a live refresh is in flight. */
   const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
-
   const [dispatched, setDispatched] = useState<{ order: FulfillmentOrder; result: DispatchResult } | null>(null);
   const [verifying, setVerifying] = useState<FulfillmentOrder | null>(null);
 
   const orders = data ?? [];
   const awaiting = orders.filter(needsDispatch);
   const transit = orders.filter(inTransit);
+  const rows = tab === 'dispatch' ? awaiting : transit;
 
   /** Pulls the latest ShipRocket status for one in-transit order. */
   const refreshTracking = async (o: FulfillmentOrder) => {
@@ -74,125 +78,151 @@ export function DeliveryPage({ onMenu }: PageProps) {
     }
   };
 
-  const card = (o: FulfillmentOrder, canDispatch: boolean) => {
-    const accent = orderStatusColor(o.orderStatus);
-    const status = liveStatus[o.id] ?? o.shipmentStatus;
-    const isRefreshing = refreshing.has(o.id);
-
-    return (
-      <ListCard key={o.id} className="mb-2.5">
-        <div className="flex items-start gap-2">
-          <p className="min-w-0 flex-1 truncate text-sm font-extrabold text-ink">#{o.orderNumber}</p>
-          <Tag text={orderStatusLabel(o.orderStatus)} color={accent} />
+  const columns: Column<FulfillmentOrder>[] = [
+    {
+      id: 'order',
+      header: 'Order',
+      sortValue: o => o.orderNumber,
+      cell: o => (
+        <div className="min-w-0">
+          <p className="truncate font-mono text-[12.5px] font-medium text-foreground">#{o.orderNumber}</p>
+          <p className="truncate text-[12px] text-muted-foreground">{whenLocal(o.createdAt)}</p>
         </div>
-
-        <p className="mt-1.5 text-[13px] font-semibold text-ink-soft">{o.user.fullName}</p>
-        <p className="text-[11px] text-muted">{o.user.email}</p>
-        {o.shippingAddress && <p className="mt-1 line-clamp-2 text-[11px] text-muted">{o.shippingAddress}</p>}
-
-        {(o.awbCode || o.courierName) && (
-          <div className="mt-2">
-            {o.courierName && <p className="text-xs font-semibold text-ink-soft">Courier: {o.courierName}</p>}
-            {o.awbCode && <p className="truncate text-xs text-muted">AWB: {o.awbCode}</p>}
-            {status && <p className="text-xs text-success">Status: {status}</p>}
+      ),
+    },
+    {
+      id: 'customer',
+      header: 'Customer',
+      sortValue: o => o.user.fullName,
+      cell: o => (
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">{o.user.fullName}</p>
+          <p className="truncate text-[12px] text-muted-foreground">{o.user.email}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'address',
+      header: 'Ship to',
+      secondary: true,
+      cell: o => (
+        <p className="line-clamp-2 max-w-[18rem] text-[12.5px] text-muted-foreground">
+          {o.shippingAddress || '—'}
+        </p>
+      ),
+    },
+    {
+      id: 'courier',
+      header: 'Courier',
+      secondary: true,
+      cell: o => {
+        const status = liveStatus[o.id] ?? o.shipmentStatus;
+        if (!o.courierName && !o.awbCode) {
+          return (
+            <Badge color={o.shiprocketSynced ? 'var(--color-success)' : 'var(--color-warning)'}>
+              {o.shiprocketSynced ? 'In ShipRocket' : 'Not synced'}
+            </Badge>
+          );
+        }
+        return (
+          <div className="min-w-0">
+            {o.courierName && <p className="truncate text-[12.5px] text-foreground">{o.courierName}</p>}
+            {o.awbCode && <p className="truncate font-mono text-[11.5px] text-muted-foreground">{o.awbCode}</p>}
+            {status && <p className="truncate text-[11.5px] text-success">{status}</p>}
           </div>
-        )}
-
-        <div className="mt-2">
-          <span
-            className="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold tracking-[0.4px]"
-            style={{
-              color: o.shiprocketSynced ? 'var(--color-success)' : 'var(--color-warning)',
-              backgroundColor: `color-mix(in srgb, ${
-                o.shiprocketSynced ? 'var(--color-success)' : 'var(--color-warning)'
-              } 12%, transparent)`,
-            }}
-          >
-            {o.shiprocketSynced ? 'In ShipRocket' : 'Not in ShipRocket'}
-          </span>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-base font-black text-accent">{money(o.finalAmount)}</span>
-          <span className="flex-1" />
-          {(o.trackingUrl || o.awbCode) && (
-            <PrimaryButton
-              label={isRefreshing ? 'Refreshing' : 'Refresh'}
-              full={false}
-              icon={Refresh}
-              color="var(--color-info)"
-              loading={isRefreshing}
-              onClick={() => refreshTracking(o)}
-            />
-          )}
-          {o.trackingUrl && (
-            <a
-              href={o.trackingUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="label-caps inline-flex h-10 items-center gap-2 rounded-2xl border px-5 text-[10px] tracking-[1.5px] text-white"
-              style={{
-                backgroundColor: 'var(--color-info)',
-                borderColor: 'color-mix(in srgb, var(--color-info) 75%, black)',
-              }}
-            >
-              <ExternalLink size={16} />
-              Track
-            </a>
-          )}
-          {canDispatch ? (
-            <PrimaryButton
-              label="Dispatch"
-              full={false}
-              icon={Truck}
-              color="var(--color-success)"
-              onClick={() => dispatch(o)}
-            />
-          ) : (
-            <PrimaryButton
-              label="Verify OTP"
-              full={false}
-              icon={BadgeCheck}
-              color="var(--color-teal)"
-              onClick={() => setVerifying(o)}
-            />
-          )}
-        </div>
-      </ListCard>
-    );
-  };
+        );
+      },
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      sortValue: o => o.orderStatus,
+      cell: o => (
+        <Badge variant="dot" color={orderStatusColor(o.orderStatus)}>
+          {orderStatusLabel(o.orderStatus)}
+        </Badge>
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Total',
+      align: 'right',
+      sortValue: o => o.finalAmount,
+      cell: o => <span className="tnum font-medium text-foreground">{money(o.finalAmount)}</span>,
+    },
+  ];
 
   return (
-    <>
+    <PageBody>
       <PageHeader
         title="Delivery"
-        subtitle={`${awaiting.length} to dispatch · ${transit.length} in transit`}
-        onMenu={onMenu}
+        description="Dispatch what is waiting, and confirm what has arrived."
       />
-      <PageBody>
-        {loading ? (
-          <BrandLoader />
-        ) : error ? (
-          <EmptyBox icon={Truck} message={error} />
-        ) : awaiting.length === 0 && transit.length === 0 ? (
-          <EmptyBox icon={Truck} message="No active deliveries" />
-        ) : (
-          <>
-            {awaiting.length > 0 && (
-              <>
-                <SectionLabel title="Awaiting Dispatch" />
-                {awaiting.map(o => card(o, true))}
-              </>
+
+      <div className="mb-5">
+        <PillTabs<Tab>
+          tabs={[
+            { id: 'dispatch', label: 'Awaiting dispatch', count: awaiting.length },
+            { id: 'transit', label: 'In transit', count: transit.length },
+          ]}
+          active={tab}
+          onSelect={setTab}
+        />
+      </div>
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={o => o.id}
+        loading={loading}
+        initialSort={{ id: 'order', dir: 'desc' }}
+        rowActions={o => (
+          <div className="flex items-center justify-end gap-2">
+            {tab === 'dispatch' ? (
+              <Button size="sm" variant="success" icon={Truck} onClick={() => dispatch(o)}>
+                Dispatch
+              </Button>
+            ) : (
+              <Button size="sm" variant="primary" icon={BadgeCheck} onClick={() => setVerifying(o)}>
+                Verify
+              </Button>
             )}
-            {transit.length > 0 && (
-              <>
-                <SectionLabel title="In Transit" />
-                {transit.map(o => card(o, false))}
-              </>
+
+            {(o.trackingUrl || o.awbCode) && (
+              <DropdownMenu
+                label={`More actions for ${o.orderNumber}`}
+                trigger={
+                  <span className="grid size-8 place-items-center rounded-lg text-subtle-foreground transition-colors duration-150 hover:bg-hover hover:text-foreground">
+                    <MoreHorizontal size={16} />
+                  </span>
+                }
+              >
+                <MenuItem icon={Refresh} onSelect={() => refreshTracking(o)}>
+                  {refreshing.has(o.id) ? 'Refreshing…' : 'Refresh tracking'}
+                </MenuItem>
+                {o.trackingUrl && (
+                  <MenuItem
+                    icon={ExternalLink}
+                    onSelect={() => window.open(o.trackingUrl!, '_blank', 'noopener,noreferrer')}
+                  >
+                    Open tracking
+                  </MenuItem>
+                )}
+              </DropdownMenu>
             )}
-          </>
+          </div>
         )}
-      </PageBody>
+        empty={{
+          icon: Truck,
+          title: error
+            ? 'Could not load deliveries'
+            : tab === 'dispatch'
+              ? 'Nothing waiting to dispatch'
+              : 'Nothing in transit',
+          description:
+            error ?? (tab === 'dispatch' ? 'Paid orders appear here ready to send out.' : 'Dispatched parcels appear here until they are delivered.'),
+        }}
+      />
 
       {dispatched && (
         <DispatchedDialog
@@ -212,7 +242,7 @@ export function DeliveryPage({ onMenu }: PageProps) {
           }}
         />
       )}
-    </>
+    </PageBody>
   );
 }
 
@@ -230,30 +260,32 @@ function DispatchedDialog({
 
   return (
     <Modal
-      title="Order Dispatched"
+      title="Order dispatched"
+      description={`#${order.orderNumber} is on its way.`}
       icon={Truck}
       accent="var(--color-success)"
       onClose={onClose}
-      actions={<PrimaryButton label="OK" full={false} onClick={onClose} />}
+      actions={
+        <Button variant="primary" onClick={onClose}>
+          Done
+        </Button>
+      }
     >
-      <p className="text-[13px] text-ink-soft">#{order.orderNumber}</p>
-
       {result.courierError ? (
-        <div className="mt-3 rounded-lg bg-warning/[0.12] p-2.5">
-          <p className="text-xs font-semibold text-warning">Courier: {result.courierError}</p>
+        <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+          <p className="text-[12.5px] text-warning">Courier: {result.courierError}</p>
         </div>
       ) : awb ? (
-        <p className="mt-3 text-xs font-semibold text-success">
-          Courier: {courierName ?? '--'} · AWB: {awb}
-        </p>
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Badge color="var(--color-success)">{courierName ?? 'Courier'}</Badge>
+          <Badge>{awb}</Badge>
+        </div>
       ) : null}
 
-      <p className="mt-3.5 text-xs text-muted">Delivery OTP (relay this to the customer):</p>
-      <div className="mt-2">
-        <OtpDisplay otp={result.deliveryOtp ?? ''} />
-      </div>
-      <p className="mt-2.5 text-[11px] text-muted">
-        Expires in 10 minutes. The customer reads this back to the delivery partner.
+      <SectionHeading title="Delivery OTP" description="Read this out to the customer." />
+      <OtpDisplay otp={result.deliveryOtp ?? ''} />
+      <p className="mt-3 text-[12px] text-muted-foreground">
+        Expires in 10 minutes. The customer reads it back to the delivery partner.
       </p>
     </Modal>
   );
@@ -287,22 +319,23 @@ function VerifyDeliveryDialog({
 
   return (
     <Modal
-      title="Verify Delivery"
+      title="Verify delivery"
+      description={`Enter the OTP the customer read out for #${order.orderNumber}.`}
       icon={ShieldCheck}
       accent="var(--color-success)"
       onClose={onClose}
       actions={
         <>
-          <GhostButton label="Cancel" onClick={onClose} disabled={busy} />
-          <PrimaryButton label="Verify" full={false} loading={busy} disabled={!otp} onClick={submit} />
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={busy} disabled={otp.length < 6} onClick={submit}>
+            Confirm delivery
+          </Button>
         </>
       }
     >
-      <p className="text-[13px] text-ink-soft">#{order.orderNumber}</p>
-      <p className="mt-3.5 text-xs text-muted">Enter the delivery OTP the customer read out:</p>
-      <div className="mt-2.5">
-        <OtpInput value={otp} onChange={setOtp} />
-      </div>
+      <OtpInput value={otp} onChange={setOtp} />
     </Modal>
   );
 }

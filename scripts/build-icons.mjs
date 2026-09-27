@@ -60,6 +60,9 @@ const ICONS = {
     LogOut: 'SignOut',
     Star: 'Star',
     Spinner: 'SpinnerGap',
+    MoreHorizontal: 'DotsThree',
+    Command: 'Command',
+    PanelLeft: 'SidebarSimple',
   },
   'Status & meaning': {
     Info: 'Info',
@@ -91,6 +94,11 @@ const ICONS = {
     StoreIcon: 'Storefront',
     TagIcon: 'Tag',
     BellIcon: 'Bell',
+  },
+  Appearance: {
+    Moon: 'Moon',
+    Sun: 'Sun',
+    Monitor: 'Monitor',
   },
   'Media & forms': {
     ImageIcon: 'Image',

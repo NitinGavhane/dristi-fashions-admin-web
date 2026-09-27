@@ -1,30 +1,28 @@
 /**
  * Category tree — a port of dristi-admin-app/lib/screens/categories_screen.dart.
  *
- * With no filter the list is grouped Men / Women / Kids, then "Other" (unisex
- * and ungendered parents), then "Ungrouped" for anything that resolves to no
- * gender at all. The gender of a category is resolved the way the backend does:
- * its own gender if it is a real one, otherwise the parent's.
+ * Flattened into a table where children sit indented under their parent, so the
+ * hierarchy is still legible but every row is scannable and sortable-free. The
+ * gender of a category resolves the way the backend does: its own gender when
+ * it is a real one, otherwise the parent's.
  */
 import { useMemo, useState } from 'react';
-import { Indent, NavCategories, Plus } from '../components/icons';
+import { Indent, MoreHorizontal, NavCategories, Pencil, Plus, Trash } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise, imageUrl } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
-import { MAIN_CATEGORY_NAMES, SPECIFIC_GENDERS, isMainCategoryName, isParentCategory, type AdminCategory } from '../types';
-import { useConfirm, useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
 import {
-  BrandLoader,
-  DeleteButton,
-  EditButton,
-  EmptyBox,
-  FilterChips,
-  FloatingAction,
-  PageHeader,
-  SafeImage,
-} from '../components/ui';
+  SPECIFIC_GENDERS,
+  isMainCategoryName,
+  isParentCategory,
+  type AdminCategory,
+} from '../types';
+import { useConfirm, useToast } from '../context/AdminContext';
+import { PageBody, PageHeader, Toolbar } from '../components/AdminShell';
+import { DataTable, type Column } from '../components/DataTable';
+import { Badge, Button, DropdownMenu, MenuItem } from '../components/primitives';
+import { FilterChips, SafeImage, SearchInput } from '../components/ui';
 import type { PageProps } from './types';
 
 const GENDER_FILTERS = [
@@ -50,35 +48,59 @@ function genderFor(cat: AdminCategory, all: AdminCategory[]): string {
   return own;
 }
 
-export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
-  const [genderFilter, setGenderFilter] = useState('');
+/** A category plus its depth, so the table can indent it. */
+interface Row {
+  cat: AdminCategory;
+  depth: number;
+  childCount: number;
+}
+
+export function CategoriesPage({ onNavigate }: PageProps) {
+  const [gender, setGender] = useState('');
+  const [query, setQuery] = useState('');
   const confirm = useConfirm();
   const toast = useToast();
 
   const { data, loading, error, reload } = useAsync(
-    () => api.getCategories({ gender: genderFilter || undefined }),
-    [genderFilter],
+    () => api.getCategories({ gender: gender || undefined }),
+    [gender],
   );
 
   const categories = data ?? [];
 
-  const groups = useMemo(() => {
-    const parents = categories.filter(isParentCategory);
+  /**
+   * Parents first, each followed by its own children — so a child never floats
+   * away from the row it belongs under once the list is filtered.
+   */
+  const rows = useMemo<Row[]>(() => {
+    const q = query.trim().toLowerCase();
     const childrenOf = (id: string) => categories.filter(c => c.parentId === id);
+    const matches = (c: AdminCategory) => !q || c.name.toLowerCase().includes(q);
 
-    const genderParents = parents.filter(c => isMainCategoryName(c.name));
-    const otherParents = parents.filter(c => !isMainCategoryName(c.name) && genderFor(c, categories) === '');
-    const forGender = (gender: string) =>
-      categories.filter(c => genderFor(c, categories) === gender && !isMainCategoryName(c.name));
-    const orphans = categories.filter(c => genderFor(c, categories) === '' && !isMainCategoryName(c.name));
+    const out: Row[] = [];
+    for (const parent of categories.filter(isParentCategory)) {
+      const children = childrenOf(parent.id);
+      const keptChildren = children.filter(matches);
+      // Keep a parent whose children match, so the hierarchy stays intact.
+      if (matches(parent) || keptChildren.length > 0) {
+        out.push({ cat: parent, depth: 0, childCount: children.length });
+        for (const child of matches(parent) ? children : keptChildren) {
+          out.push({ cat: child, depth: 1, childCount: 0 });
+        }
+      }
+    }
 
-    return { childrenOf, genderParents, otherParents, forGender, orphans };
-  }, [categories]);
+    // Anything whose parent is not in the list would otherwise vanish.
+    const shown = new Set(out.map(r => r.cat.id));
+    for (const c of categories) {
+      if (!shown.has(c.id) && matches(c)) out.push({ cat: c, depth: c.parentId ? 1 : 0, childCount: 0 });
+    }
+    return out;
+  }, [categories, query]);
 
-  const remove = async (cat: AdminCategory) => {
-    const children = groups.childrenOf(cat.id);
+  const remove = async (cat: AdminCategory, childCount: number) => {
     const ok = await confirm({
-      message: `Remove "${cat.name}"?${children.length > 0 ? '\nSubcategories will also be removed.' : ''}`,
+      message: `Remove "${cat.name}"?${childCount > 0 ? '\nIts subcategories will also be removed.' : ''}`,
     });
     if (!ok) return;
     try {
@@ -90,32 +112,14 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
     }
   };
 
-  const renderCard = (cat: AdminCategory) => {
-    const parent = isParentCategory(cat);
-    const children = parent ? groups.childrenOf(cat.id) : [];
-    const accent = cat.isActive ? 'var(--color-accent)' : 'var(--color-muted)';
-
-    const meta = [
-      parent ? 'PARENT' : 'SUBCATEGORY',
-      cat.gender ? capitalise(cat.gender) : null,
-      children.length > 0 ? `${children.length} SUBCATEGORIES` : null,
-      !cat.isActive ? 'INACTIVE' : null,
-    ]
-      .filter(Boolean)
-      .join(' · ');
-
-    return (
-      <div
-        key={cat.id}
-        className="bg-white/[0.02] mb-2 rounded-2xl border p-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]"
-        style={{
-          marginLeft: parent ? 0 : 20,
-          borderColor: parent ? 'color-mix(in srgb, var(--color-accent) 25%, transparent)' : 'var(--color-hair)',
-        }}
-      >
-        <div className="flex items-center gap-3.5">
-          {!parent && (
-            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted/10 text-muted">
+  const columns: Column<Row>[] = [
+    {
+      id: 'name',
+      header: 'Category',
+      cell: ({ cat, depth, childCount }) => (
+        <div className="flex items-center gap-3" style={{ paddingLeft: depth * 22 }}>
+          {depth > 0 && (
+            <span className="shrink-0 text-subtle-foreground">
               <Indent size={14} />
             </span>
           )}
@@ -123,107 +127,109 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
             <SafeImage
               src={imageUrl(cat.imageUrl)}
               alt=""
-              className="size-[46px] shrink-0 rounded-2xl border object-cover"
-              fallback={<span className="text-xl font-black">{cat.name[0]?.toUpperCase() ?? '?'}</span>}
+              className="size-8 shrink-0 rounded-lg border border-border object-cover"
             />
           ) : (
-            <span
-              className="grid size-[46px] shrink-0 place-items-center rounded-2xl border text-xl font-black"
-              style={{
-                color: accent,
-                borderColor: cat.isActive
-                  ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
-                  : 'var(--color-hair)',
-                backgroundColor: cat.isActive
-                  ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
-                  : 'var(--color-raised)',
-              }}
-            >
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-border bg-hover text-[12px] font-semibold text-muted-foreground">
               {cat.name[0]?.toUpperCase() ?? '?'}
             </span>
           )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold tracking-[0.5px] text-ink">{cat.name}</p>
-            <span
-              className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold"
-              style={{
-                color: cat.isActive ? 'var(--color-muted)' : 'var(--color-error)',
-                backgroundColor: cat.isActive
-                  ? 'var(--color-raised)'
-                  : 'color-mix(in srgb, var(--color-error) 8%, transparent)',
-              }}
-            >
-              {meta}
-            </span>
-          </div>
-          <div className="flex shrink-0 flex-col gap-1.5">
-            <EditButton onClick={() => onNavigate(`/categories/${cat.id}`)} label={`Edit ${cat.name}`} />
-            <DeleteButton onClick={() => remove(cat)} label={`Delete ${cat.name}`} />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{cat.name}</p>
+            {childCount > 0 && (
+              <p className="text-[11.5px] text-subtle-foreground">
+                {childCount} subcategor{childCount === 1 ? 'y' : 'ies'}
+              </p>
+            )}
           </div>
         </div>
-      </div>
-    );
-  };
-
-  const groupHeading = (text: string) => (
-    <div className="flex items-center gap-2 pb-2.5 pt-3">
-      <span className="block h-0.5 w-4 rounded-sm bg-gradient-to-r from-accent to-accent-bright" />
-      <span className="label-caps text-[10px] font-extrabold tracking-[3px] text-muted">{text}</span>
-    </div>
-  );
-
-  const body = () => {
-    if (loading) return <BrandLoader />;
-    if (error) return <EmptyBox icon={NavCategories} message={error} />;
-    if (categories.length === 0) return <EmptyBox icon={NavCategories} message="No categories" />;
-
-    if (genderFilter) {
-      const rows = categories.filter(
-        c => genderFor(c, categories) === genderFilter && !isMainCategoryName(c.name),
-      );
-      if (rows.length === 0) return <EmptyBox icon={NavCategories} message="No categories" />;
-      return rows.map(renderCard);
-    }
-
-    const other = [...groups.otherParents, ...groups.forGender('unisex')];
-    // `_orphans` in the Flutter screen is a superset of `_otherParents`, so a
-    // gender-less parent shows up under both "Other" and "Ungrouped" there.
-    // Listing it once is the same set of categories, minus the double entry.
-    const shown = new Set(other.map(c => c.id));
-    const ungrouped = groups.orphans.filter(c => !shown.has(c.id));
-
-    return (
-      <>
-        {MAIN_CATEGORY_NAMES.map(gender => (
-          <div key={gender}>
-            {groups.genderParents.filter(p => p.name.toLowerCase() === gender.toLowerCase()).map(renderCard)}
-            {groups.forGender(gender.toLowerCase()).map(renderCard)}
-          </div>
-        ))}
-        {other.length > 0 && (
-          <>
-            {groupHeading('Other')}
-            {other.map(renderCard)}
-          </>
-        )}
-        {ungrouped.length > 0 && (
-          <>
-            {groupHeading('Ungrouped')}
-            {ungrouped.map(renderCard)}
-          </>
-        )}
-      </>
-    );
-  };
+      ),
+    },
+    {
+      id: 'slug',
+      header: 'Slug',
+      secondary: true,
+      cell: ({ cat }) => <span className="font-mono text-[12px] text-muted-foreground">{cat.slug}</span>,
+    },
+    {
+      id: 'gender',
+      header: 'Gender',
+      cell: ({ cat }) => {
+        const g = genderFor(cat, categories);
+        return g ? <Badge>{capitalise(g)}</Badge> : <span className="text-subtle-foreground">—</span>;
+      },
+    },
+    {
+      id: 'level',
+      header: 'Level',
+      secondary: true,
+      cell: ({ depth }) => (
+        <span className="text-[12.5px] text-muted-foreground">{depth === 0 ? 'Top level' : 'Subcategory'}</span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ cat }) => (
+        <Badge variant="dot" color={cat.isActive ? 'var(--color-success)' : 'var(--color-subtle-foreground)'}>
+          {cat.isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+  ];
 
   return (
-    <>
-      <PageHeader title="Categories" subtitle={`${categories.length} total`} onMenu={onMenu} />
-      <PageBody>
-        <FilterChips options={GENDER_FILTERS} active={genderFilter} onSelect={setGenderFilter} />
-        <div className="mt-4">{body()}</div>
-      </PageBody>
-      <FloatingAction onClick={() => onNavigate('/categories/new')} label="Add category" icon={Plus} />
-    </>
+    <PageBody>
+      <PageHeader
+        title="Categories"
+        description={`${categories.length} categor${categories.length === 1 ? 'y' : 'ies'} across the catalogue.`}
+        actions={
+          <Button variant="primary" icon={Plus} onClick={() => onNavigate('/categories/new')}>
+            New category
+          </Button>
+        }
+      />
+
+      <Toolbar>
+        <SearchInput hint="Search categories..." value={query} onChange={setQuery} className="w-full sm:w-64" />
+        <FilterChips options={GENDER_FILTERS} active={gender} onSelect={setGender} />
+      </Toolbar>
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        rowKey={r => r.cat.id}
+        loading={loading}
+        onRowClick={r => onNavigate(`/categories/${r.cat.id}`)}
+        pageSize={0}
+        rowActions={r => (
+          <DropdownMenu
+            label={`Actions for ${r.cat.name}`}
+            trigger={
+              <span className="grid size-8 place-items-center rounded-lg text-subtle-foreground transition-colors duration-150 hover:bg-hover hover:text-foreground">
+                <MoreHorizontal size={16} />
+              </span>
+            }
+          >
+            <MenuItem icon={Pencil} onSelect={() => onNavigate(`/categories/${r.cat.id}`)}>
+              Edit
+            </MenuItem>
+            <MenuItem icon={Trash} destructive onSelect={() => remove(r.cat, r.childCount)}>
+              Delete
+            </MenuItem>
+          </DropdownMenu>
+        )}
+        empty={{
+          icon: NavCategories,
+          title: error ? 'Could not load categories' : 'No categories yet',
+          description: error ?? 'Create Men, Women or Kids to start the catalogue tree.',
+          action: error ? undefined : (
+            <Button variant="primary" icon={Plus} onClick={() => onNavigate('/categories/new')}>
+              New category
+            </Button>
+          ),
+        }}
+      />
+    </PageBody>
   );
 }

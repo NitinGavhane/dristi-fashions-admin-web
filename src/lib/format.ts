@@ -67,15 +67,15 @@ export function orderStatusColor(status: string): string {
     case 'processing':
       return 'var(--color-warning)';
     case 'dispatched':
-      return 'var(--color-accent)';
+      return 'var(--color-primary)';
     case 'out_for_delivery':
       return 'var(--color-teal)';
     case 'delivered':
       return 'var(--color-success)';
     case 'cancelled':
-      return 'var(--color-error)';
+      return 'var(--color-destructive)';
     default:
-      return 'var(--color-muted)';
+      return 'var(--color-muted-foreground)';
   }
 }
 
@@ -114,10 +114,10 @@ export function returnStatusColor(status: string | null): string {
     case 'approved':
       return 'var(--color-info)';
     case 'rejected':
-      return 'var(--color-error)';
+      return 'var(--color-destructive)';
     case 'picked_up':
       return 'var(--color-success)';
     default:
-      return 'var(--color-muted)';
+      return 'var(--color-muted-foreground)';
   }
 }

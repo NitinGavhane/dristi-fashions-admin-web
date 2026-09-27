@@ -49,11 +49,21 @@
       rel="stylesheet"
     />
 
-    <!-- Paint the void before the CSS bundle lands, so a slow connection never
-         flashes white into an OLED console. -->
-    <style>
-      html { background-color: #050505; }
-    </style>
+    <!-- Resolve the theme before first paint. Without this a light-mode admin
+         gets a black flash on every load, and a dark-mode one gets a white one. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('dristi_admin_theme') || 'dark';
+          var dark = saved === 'dark' ||
+            (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.backgroundColor = dark ? '#08080b' : '#f7f7f9';
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

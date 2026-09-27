@@ -1,140 +1,156 @@
 @import "tailwindcss";
 
 /*
- * ETHEREAL GLASS — the Dristi Fashions admin console.
+ * The Dristi admin design system.
  *
- * An OLED-black surface lit by a violet mesh, with vantablack glass cards and
- * hairline highlights. The brand violet survives as the signature glow, so the
- * panel still reads as Dristi even though the language is entirely different
- * from the Flutter app's light lavender.
+ * Token vocabulary follows the shadcn/Next.js convention — background,
+ * foreground, card, popover, primary, muted, accent, destructive, border,
+ * input, ring — so the components read the way a Next.js dashboard reads, and
+ * anyone who has worked in that ecosystem can navigate this without a tour.
  *
- * Every colour is a token. Components never hardcode a hex, which is what let
- * the whole console flip from light to dark without touching page logic.
+ * Two themes, both first-class. Dark is the default (an admin stares at this
+ * all day) and keeps the Ethereal Glass character: OLED black lit by a violet
+ * mesh. Light is a genuine paper-white console, not a washed-out inversion.
+ * `.dark` on <html> switches; ThemeProvider owns that class.
  */
+
 @theme {
-  /* ── Canvas ─────────────────────────────────────────────────────────────
-     Three depths of black. `void` is the page, `surface` a card sitting on it,
-     `raised` something sitting on the card. The gaps are deliberately tiny —
-     on OLED, separation comes from hairlines and glow, not from value jumps. */
-  --color-void: #050505;
-  --color-surface: #0b0b0e;
-  --color-raised: #121216;
-  --color-sunken: #08080a;
+  /* Surfaces */
+  --color-background: #08080b;
+  --color-surface: #0d0d12;
+  --color-card: #101016;
+  --color-card-raised: #16161d;
+  --color-popover: #14141b;
 
-  /* ── Hairlines ──────────────────────────────────────────────────────────
-     Never a grey border. These are white at very low alpha, so they read as a
-     lit edge rather than a drawn line. */
-  --color-hair: rgba(255, 255, 255, 0.07);
-  --color-hair-bright: rgba(255, 255, 255, 0.12);
-  --color-hair-strong: rgba(255, 255, 255, 0.18);
+  /* Text */
+  --color-foreground: rgba(255, 255, 255, 0.95);
+  --color-muted-foreground: rgba(255, 255, 255, 0.55);
+  --color-subtle-foreground: rgba(255, 255, 255, 0.35);
 
-  /* ── Text ramp ──────────────────────────────────────────────────────────
-     Pure white is reserved for the single most important thing on screen. */
-  --color-ink: rgba(255, 255, 255, 0.95);
-  --color-ink-soft: rgba(255, 255, 255, 0.64);
-  --color-muted: rgba(255, 255, 255, 0.42);
-  --color-faint: rgba(255, 255, 255, 0.26);
+  /* Lines */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+  --color-input: rgba(255, 255, 255, 0.10);
+  --color-ring: #8b5cf6;
 
-  /* ── Brand ──────────────────────────────────────────────────────────────
-     #6b38d4 is the Dristi violet, but it goes muddy on black — so the deep
-     value is kept for glows and mesh, and the luminous values carry text. */
-  --color-accent: #8b5cf6;
-  --color-accent-bright: #a78bfa;
-  --color-accent-soft: #c4b5fd;
-  --color-accent-deep: #6b38d4;
-  --color-accent-abyss: #3b1d80;
+  /* Brand — the Dristi violet, re-lit so it stays legible on black */
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #9f75f8;
+  --color-primary-soft: #c4b5fd;
+  --color-primary-deep: #6b38d4;
+  --color-primary-foreground: #ffffff;
 
-  /* Secondary — the Flutter panel's amber, re-lit for a dark surface. */
+  /* Accents */
   --color-amber: #f5b942;
-  --color-amber-soft: #fcd34d;
-
-  /* ── Semantic ───────────────────────────────────────────────────────────*/
   --color-success: #34d399;
-  --color-error: #fb7185;
+  --color-destructive: #fb7185;
   --color-warning: #fbbf24;
   --color-info: #818cf8;
   --color-teal: #2dd4bf;
 
-  /* ── Type ───────────────────────────────────────────────────────────────*/
+  /* Row/hover washes — separate tokens because they invert between themes */
+  --color-hover: rgba(255, 255, 255, 0.04);
+  --color-active: rgba(255, 255, 255, 0.07);
+
+  /* Type */
   --font-display: 'Clash Display', 'Plus Jakarta Sans', sans-serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-  /* ── Motion ─────────────────────────────────────────────────────────────
-     One spring for everything. Nothing in this console uses ease-in-out. */
+  /* Motion */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Radius scale */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+/*
+ * Light theme. Not an inversion — a warm paper console with its own depth
+ * model, where separation comes from shadow rather than from glow.
+ */
+:root:not(.dark) {
+  --color-background: #f7f7f9;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-card-raised: #fbfbfd;
+  --color-popover: #ffffff;
+
+  --color-foreground: #0d0d12;
+  --color-muted-foreground: #62626d;
+  --color-subtle-foreground: #9294a0;
+
+  --color-border: rgba(13, 13, 18, 0.09);
+  --color-border-strong: rgba(13, 13, 18, 0.16);
+  --color-input: rgba(13, 13, 18, 0.12);
+
+  --color-primary: #6b38d4;
+  --color-primary-hover: #5b2cba;
+  --color-primary-soft: #6b38d4;
+  --color-primary-deep: #4c1d95;
+
+  --color-success: #0f9d6b;
+  --color-destructive: #d92d4b;
+  --color-warning: #b45309;
+  --color-info: #5b5bd6;
+  --color-teal: #0d9488;
+  --color-amber: #b45309;
+
+  --color-hover: rgba(13, 13, 18, 0.035);
+  --color-active: rgba(13, 13, 18, 0.06);
 }
 
 @layer base {
   html {
     overflow-x: clip;
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: smooth;
+    color-scheme: dark;
   }
+  :root:not(.dark) { color-scheme: light; }
 
   body {
     font-family: var(--font-sans);
-    background-color: var(--color-void);
-    color: var(--color-ink);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: 'ss01', 'cv01';
   }
 
-  /* Numbers that sit in columns — order totals, stock, OTPs — must not jitter
-     as they change. */
-  .tnum {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum';
-  }
+  /* Figures that sit in table columns must not jitter as they change. */
+  .tnum { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
 
   img, svg, video, canvas, iframe { max-width: 100%; }
   img, video { height: auto; }
-
-  h1, h2, h3, h4, h5, h6, p, span, dd, dt, li, button, a, label {
-    overflow-wrap: break-word;
-  }
-
+  h1, h2, h3, h4, h5, h6, p, span, dd, dt, li, button, a, label { overflow-wrap: break-word; }
   input, select, textarea { min-width: 0; max-width: 100%; }
 
-  /* Mobile Safari zooms whenever a focused field is under 16px. */
   @media (max-width: 640px) {
-    input:not([type='checkbox']):not([type='radio']), select, textarea {
-      font-size: 16px;
-    }
+    input:not([type='checkbox']):not([type='radio']), select, textarea { font-size: 16px; }
   }
 
-  /* A focus ring that belongs to this palette, not the browser's. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 1px var(--color-void), 0 0 0 3px rgba(139, 92, 246, 0.55);
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-ring);
     border-radius: inherit;
   }
 
-  ::selection {
-    background: rgba(139, 92, 246, 0.35);
-    color: #fff;
-  }
+  ::selection { background: color-mix(in srgb, var(--color-primary) 35%, transparent); }
 
-  /* Scrollbars, restyled — a default grey scrollbar breaks an OLED surface. */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
-  }
+  * { scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
   *::-webkit-scrollbar { width: 10px; height: 10px; }
   *::-webkit-scrollbar-track { background: transparent; }
   *::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-border-strong);
     border-radius: 999px;
     border: 3px solid transparent;
     background-clip: content-box;
   }
-  *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); background-clip: content-box; }
 }
 
-/* ══ MESH & GRAIN ═══════════════════════════════════════════════════════════
-   Both are fixed and pointer-events-none, so neither ever repaints while the
-   page scrolls. The mesh is what stops the black reading as flat #000. */
+/* ══ AMBIENCE ═══════════════════════════════════════════════════════════════
+   Fixed and pointer-events-none, so neither repaints while the page scrolls. */
 
 .mesh-field {
   position: fixed;
@@ -142,152 +158,136 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(60rem 40rem at 12% -10%, rgba(107, 56, 212, 0.28), transparent 60%),
-    radial-gradient(45rem 35rem at 92% 8%, rgba(139, 92, 246, 0.16), transparent 62%),
-    radial-gradient(50rem 40rem at 70% 105%, rgba(59, 29, 128, 0.22), transparent 60%);
+    radial-gradient(55rem 38rem at 8% -12%, rgba(107, 56, 212, 0.20), transparent 62%),
+    radial-gradient(42rem 32rem at 98% 4%, rgba(139, 92, 246, 0.11), transparent 64%);
+}
+:root:not(.dark) .mesh-field {
+  background:
+    radial-gradient(55rem 38rem at 8% -12%, rgba(107, 56, 212, 0.09), transparent 62%),
+    radial-gradient(42rem 32rem at 98% 4%, rgba(139, 92, 246, 0.06), transparent 64%);
 }
 
-/* Film grain, so the gradients never band. SVG noise keeps it dependency-free. */
 .grain-field {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+:root:not(.dark) .grain-field { display: none; }
 
-/* ══ THE DOUBLE-BEZEL ═══════════════════════════════════════════════════════
-   Nothing sits flat on the background. A card is a machined tray (the shell)
-   holding a glass plate (the core), with concentric radii. */
+/* ══ ELEVATION ══════════════════════════════════════════════════════════════
+   Dark separates with a lit top edge; light separates with a real shadow. */
 
-.bezel {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid var(--color-hair);
-  border-radius: 2rem;
-  padding: 0.375rem;
+.elevated {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+:root:not(.dark) .elevated {
+  box-shadow: 0 1px 2px rgba(13, 13, 18, 0.05), 0 4px 16px -6px rgba(13, 13, 18, 0.08);
 }
 
-.bezel-core {
-  background: linear-gradient(160deg, var(--color-raised), var(--color-surface) 65%);
-  border: 1px solid rgba(255, 255, 255, 0.045);
-  /* The top highlight is what makes it read as a physical lit edge. */
+.elevated-lg {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.07),
-    0 24px 60px -24px rgba(0, 0, 0, 0.9);
-  border-radius: calc(2rem - 0.375rem);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 32px -12px rgba(0, 0, 0, 0.7);
+}
+:root:not(.dark) .elevated-lg {
+  box-shadow: 0 2px 6px rgba(13, 13, 18, 0.06), 0 16px 48px -16px rgba(13, 13, 18, 0.14);
 }
 
-/* A tighter pair for list rows, where a 2rem radius would look bloated. */
-.bezel-sm { border-radius: 1.25rem; padding: 0.3125rem; }
-.bezel-sm > .bezel-core { border-radius: calc(1.25rem - 0.3125rem); }
-
-/* Glass, for anything fixed — the nav island and modal shells only. */
-.glass {
-  background: rgba(10, 10, 14, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid var(--color-hair-bright);
+/* Popovers, menus and the command palette. */
+.floating {
+  background: var(--color-popover);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+:root:not(.dark) .floating {
+  box-shadow: 0 12px 40px -8px rgba(13, 13, 18, 0.18), 0 0 0 1px rgba(13, 13, 18, 0.04);
 }
 
-/* ══ ACCENT SURFACES ════════════════════════════════════════════════════════*/
-
-/* The violet plate the dashboard's hero tiles and primary CTAs wear. */
-.plate-accent {
-  background: linear-gradient(150deg, #a78bfa 0%, #7c3aed 45%, #5b21b6 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.3),
-    0 18px 40px -18px rgba(139, 92, 246, 0.85);
+/* The primary surface — a lit violet plate. */
+.plate-primary {
+  background: linear-gradient(150deg, var(--color-primary-hover), var(--color-primary) 55%, var(--color-primary-deep));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 20px -8px color-mix(in srgb, var(--color-primary) 80%, transparent);
 }
 
-/* The violet glow a primary surface casts onto the void beneath it. */
-.shadow-violet {
-  box-shadow: 0 18px 40px -18px rgba(139, 92, 246, 0.75);
-}
-
-/* The microscopic uppercase label used for field names and metadata. */
-.label-caps {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-/* A hairline that fades at both ends. */
-.hairline-fade {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(139, 92, 246, 0.55) 35%,
-    rgba(167, 139, 250, 0.8) 50%,
-    rgba(139, 92, 246, 0.55) 65%,
-    transparent
-  );
-}
-
-/* ══ MOTION ═════════════════════════════════════════════════════════════════
-   Scroll entry. Elements arrive with mass — they rise, sharpen and settle.
-   Driven by IntersectionObserver in Reveal.tsx; transform/opacity/filter only. */
+/* ══ MOTION ═════════════════════════════════════════════════════════════════*/
 
 .reveal {
   opacity: 0;
-  transform: translate3d(0, 2.5rem, 0);
-  filter: blur(6px);
-  transition:
-    opacity 0.9s var(--ease-glide),
-    transform 0.9s var(--ease-glide),
-    filter 0.9s var(--ease-glide);
+  transform: translate3d(0, 1.25rem, 0);
+  transition: opacity 0.7s var(--ease-glide), transform 0.7s var(--ease-glide);
   will-change: transform, opacity;
 }
-
 .reveal[data-shown='true'] {
   opacity: 1;
   transform: translate3d(0, 0, 0);
-  filter: blur(0);
   will-change: auto;
 }
 
-/* Anyone who asked the OS for less motion gets none of it. */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-pop { animation: pop-in 0.18s var(--ease-spring); }
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-overlay { animation: overlay-in 0.2s var(--ease-spring); }
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+/* Skeleton rows — a table that is loading should look like a table. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-hover);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--color-active), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal[data-shown='true'] {
-    opacity: 1;
-    transform: none;
-    filter: none;
-    transition: none;
-  }
-  html { scroll-behavior: auto; }
+  .reveal, .reveal[data-shown='true'] { opacity: 1; transform: none; transition: none; }
+  .skeleton::after { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* The sweep that crosses a primary button on hover. */
-@keyframes sheen {
-  from { transform: translateX(-120%) skewX(-18deg); }
-  to   { transform: translateX(220%) skewX(-18deg); }
-}
-.group:hover .sheen { animation: sheen 0.9s var(--ease-glide); }
+/* ══ FORM RESETS ════════════════════════════════════════════════════════════*/
 
-/* A slow drift on the login mesh, so the page is never completely still. */
-@keyframes drift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(2%, -2%, 0) scale(1.06); }
-}
-.drift { animation: drift 22s var(--ease-glide) infinite; }
-
-/* Number inputs keep their spinners off — every numeric field here is typed. */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 
-/* The browser's autofill paints a light-blue block straight through the glass. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--color-ink);
-  -webkit-box-shadow: 0 0 0 1000px var(--color-raised) inset;
-  caret-color: var(--color-ink);
+  -webkit-text-fill-color: var(--color-foreground);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-card-raised) inset;
+  caret-color: var(--color-foreground);
   transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Kills the theme flip flashing every transition on the page at once. */
+.theme-switching * {
+  transition: none !important;
 }

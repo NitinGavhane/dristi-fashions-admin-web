@@ -1,18 +1,17 @@
 /**
- * Router and auth gate for the admin panel.
+ * Router, auth gate and app-level chrome.
  *
- * Routing is hand-rolled HTML5 pushState, the same approach the customer
- * storefront uses, so there is no extra dependency and real paths work. The
- * routes mirror the Flutter app's named routes in lib/app.dart, with the form
- * screens' `arguments: id` becoming a path segment:
- *
- *   Flutter                                  Website
- *   /products + arguments: id        ->       /products/:id   (or /products/new)
- *   /order-detail + arguments: id    ->       /orders/:id
+ * Routing is hand-rolled HTML5 pushState — the same approach the storefront
+ * uses, so there is no router dependency and real paths work. Routes mirror the
+ * Flutter app's named routes, with each form screen's `arguments: id` becoming
+ * a path segment (/products/:id, /products/new).
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminProvider, useAuth } from './context/AdminContext';
-import { AdminShell, NAV_ENTRIES } from './components/AdminShell';
+import { ThemeProvider } from './context/ThemeContext';
+import { AdminShell } from './components/AdminShell';
+import { CommandPalette, useCommandPalette } from './components/CommandPalette';
+import { breadcrumbFor, sectionFor } from './components/navigation';
 import { BrandLoader } from './components/ui';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -37,17 +36,13 @@ import { MessagesPage } from './pages/MessagesPage';
 
 const HOME = '/dashboard';
 
-/** The list route a pushed form/detail page belongs to, for the sidebar highlight. */
-function sectionFor(pathname: string): string {
-  const match = NAV_ENTRIES.find(e => pathname === e.route || pathname.startsWith(`${e.route}/`));
-  return match?.route ?? HOME;
-}
-
 export default function App() {
   return (
-    <AdminProvider>
-      <Router />
-    </AdminProvider>
+    <ThemeProvider>
+      <AdminProvider>
+        <Router />
+      </AdminProvider>
+    </ThemeProvider>
   );
 }
 
@@ -55,6 +50,7 @@ function Router() {
   const { ready, isAuthenticated } = useAuth();
   const [pathname, setPathname] = useState(() => window.location.pathname || HOME);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const command = useCommandPalette();
 
   useEffect(() => {
     const onPopState = () => setPathname(window.location.pathname || HOME);
@@ -71,15 +67,12 @@ function Router() {
   const goBack = useCallback(() => {
     // A pushed page normally has history to pop; a deep link opened directly
     // does not, so fall back to that page's own list.
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate(sectionFor(window.location.pathname));
-    }
+    if (window.history.length > 1) window.history.back();
+    else navigate(sectionFor(window.location.pathname)?.route ?? HOME);
   }, [navigate]);
 
-  // Signing out (or a dead session) must not leave a stale admin path in the
-  // address bar, and signing in should land on the dashboard.
+  // Signing out must not leave a stale admin path in the address bar, and
+  // signing in should land on the dashboard.
   useEffect(() => {
     if (!ready) return;
     if (!isAuthenticated && pathname !== '/login') {
@@ -91,102 +84,107 @@ function Router() {
     }
   }, [ready, isAuthenticated, pathname]);
 
+  const breadcrumb = useMemo(() => {
+    const isNew = pathname.endsWith('/new');
+    const isLeaf = sectionFor(pathname) && pathname !== sectionFor(pathname)?.route;
+    return breadcrumbFor(pathname, isNew ? 'New' : isLeaf ? 'Edit' : undefined);
+  }, [pathname]);
+
   if (!ready) return <BrandLoader label="Dristi Fashions" />;
   if (!isAuthenticated) return <LoginPage />;
 
-  const page = renderPage(pathname, navigate, goBack, () => setDrawerOpen(true));
-
   return (
-    <AdminShell
-      currentRoute={sectionFor(pathname)}
-      drawerOpen={drawerOpen}
-      onCloseDrawer={() => setDrawerOpen(false)}
-      onNavigate={navigate}
-      children={page}
-    />
+    <>
+      <AdminShell
+        currentRoute={sectionFor(pathname)?.route ?? HOME}
+        breadcrumb={breadcrumb}
+        drawerOpen={drawerOpen}
+        onCloseDrawer={() => setDrawerOpen(false)}
+        onOpenDrawer={() => setDrawerOpen(true)}
+        onNavigate={navigate}
+        onOpenCommand={() => command.setOpen(true)}
+      >
+        {renderPage(pathname, navigate, goBack)}
+      </AdminShell>
+
+      <CommandPalette
+        open={command.open}
+        onClose={() => command.setOpen(false)}
+        onNavigate={navigate}
+      />
+    </>
   );
 }
 
-function renderPage(
-  pathname: string,
-  onNavigate: (path: string) => void,
-  onBack: () => void,
-  onMenu: () => void,
-) {
-  const list = { onNavigate, onMenu };
+function renderPage(pathname: string, onNavigate: (path: string) => void, onBack: () => void) {
+  const page = { onNavigate };
 
   switch (pathname) {
     case '/':
     case '/dashboard':
-      return <DashboardPage {...list} />;
+      return <DashboardPage {...page} />;
     case '/users':
-      return <UsersPage {...list} />;
+      return <UsersPage {...page} />;
     case '/products':
-      return <ProductsPage {...list} />;
+      return <ProductsPage {...page} />;
     case '/orders':
-      return <OrdersPage {...list} />;
+      return <OrdersPage {...page} />;
     case '/categories':
-      return <CategoriesPage {...list} />;
+      return <CategoriesPage {...page} />;
     case '/banners':
-      return <BannersPage {...list} />;
+      return <BannersPage {...page} />;
     case '/coupons':
-      return <CouponsPage {...list} />;
+      return <CouponsPage {...page} />;
     case '/payment-methods':
-      return <PaymentMethodsPage {...list} />;
+      return <PaymentMethodsPage {...page} />;
     case '/delivery':
-      return <DeliveryPage {...list} />;
+      return <DeliveryPage {...page} />;
     case '/returns':
-      return <ReturnsPage {...list} />;
+      return <ReturnsPage {...page} />;
     case '/delivery-settings':
-      return <DeliverySettingsPage {...list} />;
+      return <DeliverySettingsPage {...page} />;
     case '/referrals':
-      return <ReferralsPage {...list} />;
+      return <ReferralsPage {...page} />;
     case '/messages':
-      return <MessagesPage {...list} />;
+      return <MessagesPage {...page} />;
     default:
       break;
   }
 
-  // Dynamic segments. `new` means a create form; anything else is the id of the
-  // record to edit. Keying on the id remounts the page when moving between two
-  // records, which resets the form's local state.
-  const id = (prefix: string): string | null => {
+  // Dynamic segments. `new` means a create form; anything else is a record id.
+  // Keying on the path remounts the page between two records, resetting state.
+  const idFrom = (prefix: string): string | null => {
     const rest = pathname.slice(prefix.length);
     return rest === 'new' ? null : rest;
   };
 
   if (pathname.startsWith('/products/')) {
-    const productId = id('/products/');
-    return <ProductFormPage key={pathname} productId={productId} onNavigate={onNavigate} onBack={onBack} />;
+    return <ProductFormPage key={pathname} productId={idFrom('/products/')} onNavigate={onNavigate} onBack={onBack} />;
   }
-
   if (pathname.startsWith('/orders/')) {
-    const orderId = pathname.slice('/orders/'.length);
-    return <OrderDetailPage key={pathname} orderId={orderId} onNavigate={onNavigate} onBack={onBack} />;
+    return (
+      <OrderDetailPage key={pathname} orderId={pathname.slice('/orders/'.length)} onNavigate={onNavigate} onBack={onBack} />
+    );
   }
-
   if (pathname.startsWith('/categories/')) {
-    return <CategoryFormPage key={pathname} categoryId={id('/categories/')} onNavigate={onNavigate} onBack={onBack} />;
+    return <CategoryFormPage key={pathname} categoryId={idFrom('/categories/')} onNavigate={onNavigate} onBack={onBack} />;
   }
-
   if (pathname.startsWith('/banners/')) {
-    return <BannerFormPage key={pathname} bannerId={id('/banners/')} onNavigate={onNavigate} onBack={onBack} />;
+    return <BannerFormPage key={pathname} bannerId={idFrom('/banners/')} onNavigate={onNavigate} onBack={onBack} />;
   }
-
   if (pathname.startsWith('/coupons/')) {
-    return <CouponFormPage key={pathname} couponId={id('/coupons/')} onNavigate={onNavigate} onBack={onBack} />;
+    return <CouponFormPage key={pathname} couponId={idFrom('/coupons/')} onNavigate={onNavigate} onBack={onBack} />;
   }
-
   if (pathname.startsWith('/payment-methods/')) {
     return (
       <PaymentMethodFormPage
         key={pathname}
-        methodId={id('/payment-methods/')}
+        methodId={idFrom('/payment-methods/')}
         onNavigate={onNavigate}
         onBack={onBack}
       />
     );
   }
 
-  return <DashboardPage {...list} />;
+  return <DashboardPage {...page} />;
 }

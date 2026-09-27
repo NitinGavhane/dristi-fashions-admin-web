@@ -6,23 +6,15 @@
  * instead, and the form only ever submits `image_url`.
  */
 import { useEffect, useState } from 'react';
-import { NavBanners } from '../components/icons';
+import { ArrowLeft } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { IMAGE_ACCEPT, IMAGE_SPECS, UploadRejected, validateAndUploadImage } from '../lib/uploads';
 import { useToast } from '../context/AdminContext';
-import { PageBody } from '../components/AdminShell';
+import { FormBody, PageHeader, StickyActions } from '../components/AdminShell';
 import { BannerCropPreview } from '../components/BannerCropPreview';
-import {
-  BrandLoader,
-  FormSection,
-  ImageSpecsBox,
-  PageHeader,
-  PrimaryButton,
-  TextInput,
-  ToggleRow,
-  UploadButton,
-} from '../components/ui';
+import { Button, Card, CardContent, CardHeader, Input, Switch } from '../components/primitives';
+import { BrandLoader, ImageSpecsBox, UploadButton } from '../components/ui';
 import type { DetailPageProps } from './types';
 
 export function BannerFormPage({ bannerId, onBack }: DetailPageProps & { bannerId: string | null }) {
@@ -83,7 +75,7 @@ export function BannerFormPage({ bannerId, onBack }: DetailPageProps & { bannerI
 
   const save = async () => {
     if (!image.trim()) {
-      setImageError('Upload an image or provide a URL');
+      setImageError('Upload an image or paste a URL');
       return;
     }
     setImageError(null);
@@ -112,68 +104,91 @@ export function BannerFormPage({ bannerId, onBack }: DetailPageProps & { bannerI
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <PageHeader title={isEdit ? 'Edit Banner' : 'New Banner'} onBack={onBack} />
-        <BrandLoader />
-      </>
-    );
-  }
+  if (loading) return <BrandLoader />;
 
   return (
-    <>
-      <PageHeader title={isEdit ? 'Edit Banner' : 'New Banner'} onBack={onBack} />
-      <PageBody className="space-y-4">
-        <FormSection title="Banner Image">
-          <ImageSpecsBox specs={IMAGE_SPECS.banner} />
-          <div className="my-3">
-            <UploadButton uploading={uploading} onFile={pickImage} accept={IMAGE_ACCEPT} />
-          </div>
-          <TextInput
-            label="Image URL"
-            value={image}
-            onChange={setImage}
-            required
-            hint="Upload above, or paste a URL"
-            error={imageError}
-          />
-        </FormSection>
+    <FormBody>
+      <PageHeader
+        title={isEdit ? 'Edit banner' : 'New banner'}
+        description="The hero image shown on the storefront and in the app."
+        actions={
+          <Button variant="ghost" icon={ArrowLeft} onClick={onBack}>
+            Back
+          </Button>
+        }
+      />
 
-        <BannerCropPreview imageUrl={image} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-5">
+          <Card>
+            <CardHeader title="Image" description="One image feeds both the app slider and the website hero." />
+            <CardContent className="space-y-4">
+              <ImageSpecsBox specs={IMAGE_SPECS.banner} />
+              <UploadButton uploading={uploading} onFile={pickImage} accept={IMAGE_ACCEPT} />
+              <Input
+                label="Image URL"
+                required
+                value={image}
+                onChange={e => setImage(e.target.value)}
+                error={imageError}
+                description="Filled in by the upload above, or paste an external URL."
+              />
+            </CardContent>
+          </Card>
 
-        <FormSection title="Details (optional)">
-          <TextInput
-            label="Title"
-            value={title}
-            onChange={setTitle}
-            hint="Shown for accessibility / future overlays"
-          />
-          <TextInput label="Subtitle" value={subtitle} onChange={setSubtitle} hint="Optional" />
-          <TextInput
-            label="Link URL"
-            value={linkUrl}
-            onChange={setLinkUrl}
-            hint="Where the banner points (optional)"
-          />
-          <TextInput label="Link Text" value={linkText} onChange={setLinkText} hint="e.g. Shop Now (optional)" />
-        </FormSection>
+          <Card>
+            <CardHeader title="Content" description="Optional copy and the link the banner points at." />
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Input label="Title" value={title} onChange={e => setTitle(e.target.value)} />
+              <Input label="Subtitle" value={subtitle} onChange={e => setSubtitle(e.target.value)} />
+              <Input label="Link URL" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="/categories" />
+              <Input label="Link text" value={linkText} onChange={e => setLinkText(e.target.value)} placeholder="Shop now" />
+            </CardContent>
+          </Card>
 
-        <FormSection title="Placement">
-          <TextInput label="Section" value={section} onChange={setSection} hint="hero" />
-          <TextInput label="Sort Order" value={sortOrder} onChange={setSortOrder} number hint="0 = first" />
-          <ToggleRow label="Active" value={active} onChange={setActive} />
-        </FormSection>
-
-        <div className="pt-4">
-          <PrimaryButton
-            label={isEdit ? 'Update Banner' : 'Create Banner'}
-            loading={saving}
-            onClick={save}
-            icon={NavBanners}
-          />
+          <Card>
+            <CardHeader title="Placement" description="Where it sits and whether it is live." />
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input label="Section" value={section} onChange={e => setSection(e.target.value)} placeholder="hero" />
+                <Input
+                  label="Sort order"
+                  type="number"
+                  value={sortOrder}
+                  onChange={e => setSortOrder(e.target.value)}
+                  description="0 shows first."
+                />
+              </div>
+              <Switch
+                label="Active"
+                description="Inactive banners stay saved but are not shown to customers."
+                checked={active}
+                onChange={setActive}
+              />
+            </CardContent>
+          </Card>
         </div>
-      </PageBody>
-    </>
+
+        {/* The crop preview earns a sticky column — it is what the admin checks
+            against while editing, not something to scroll back up to. */}
+        <div className="lg:sticky lg:top-20 lg:self-start">
+          <Card>
+            <CardHeader title="Crop preview" description="Exactly what each surface will show." />
+            <CardContent>
+              <BannerCropPreview imageUrl={image} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <StickyActions>
+        <Button variant="ghost" onClick={onBack} disabled={saving}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={save} loading={saving}>
+          {isEdit ? 'Save changes' : 'Create banner'}
+        </Button>
+      </StickyActions>
+    </FormBody>
   );
 }
