@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens transcribed from dristi-admin-app/lib/config/theme.dart
+ * (AppColors + Responsive). The Flutter admin panel never enables its dark
+ * palette — AppColors.setDark() is not called anywhere — so the website is
+ * light-only too, and the token names are kept so the two stay comparable.
+ *
+ * `--color-*` names are registered with Tailwind v4's @theme so they are also
+ * usable as utilities (bg-surface, text-muted, border-hair, …).
+ */
+@theme {
+  /* Canvas / surfaces */
+  --color-bg: #f6f3fc;
+  --color-bg-alt: #f3ebf8;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fef7ff;
+  --color-surface-raised: #ffffff;
+
+  /* Hairlines */
+  --color-hair: #cbc3d7;
+  --color-hair-light: #e7e0ed;
+
+  /* Text ramp */
+  --color-ink: #1d1a23;
+  --color-ink-soft: #494454;
+  --color-muted: #7b7486;
+
+  /* Brand — `coral` is the primary violet (token name kept from theme.dart) */
+  --color-coral: #6b38d4;
+  --color-coral-80: #8455ef;
+  --color-coral-40: #cbb8f0;
+  --color-coral-dark: #4c1d95;
+
+  /* Secondary accent — a thin amber, used sparingly on badges */
+  --color-gold: #a76500;
+  --color-gold-80: #c67c1a;
+  --color-gold-40: #ffdcbb;
+
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-success-80: #45b56e;
+  --color-error: #ba1a1a;
+  --color-error-80: #d0322e;
+  --color-info: #8a4cfc;
+  --color-purple: #8a4cfc;
+  --color-teal: #0d9488;
+  --color-warning: #a76500;
+
+  /* Action fill */
+  --color-btn: #6b38d4;
+  --color-btn-80: #8455ef;
+  --color-btn-40: #cbb8f0;
+  --color-btn-border: #d8cef8;
+
+  /* Radius scale (rInput / rButton / rCard / rCardLg / rPill) */
+  --radius-input: 10px;
+  --radius-btn: 12px;
+  --radius-card: 16px;
+  --radius-card-lg: 24px;
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Noto Sans', sans-serif;
+  --font-display: 'Montserrat', 'Inter', 'Noto Sans', sans-serif;
+}
+
+@layer base {
+  html {
+    /* Nothing in the panel scrolls sideways; `clip` (not `hidden`) keeps the
+       sticky page headers working. */
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Media never dictates the layout width. */
+  img,
+  svg,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+
+  /* Long unbroken strings (order numbers, S3 URLs, emails) wrap instead of
+     pushing their container past the viewport. */
+  h1, h2, h3, h4, h5, h6, p, span, dd, dt, li, button, a, label {
+    overflow-wrap: break-word;
+  }
+
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Mobile Safari zooms whenever a focused field is under 16px and leaves the
+     page scrolled sideways once it blurs. */
+  @media (max-width: 640px) {
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+}
+
+/* ── Composite decorations from theme.dart ───────────────────────────────── */
+
+/* AppColors.heading(...) — Montserrat display type. */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Tiny uppercase label used all over the panel (subtitles, stat captions). */
+.label-caps {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* AppColors.shadowSm / shadowMd / shadowLg */
+.shadow-sm-soft {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.shadow-md-soft {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06), 0 1px 16px rgba(0, 0, 0, 0.035);
+}
+.shadow-lg-soft {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 4px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* AppColors.shadowGold — the primary-action violet glow. */
+.shadow-violet {
+  box-shadow: 0 10px 20px rgba(107, 56, 212, 0.16), 0 1px 3px rgba(107, 56, 212, 0.06);
+}
+
+/* AppColors.cardGradient — surface -> surfaceRaised (both white in light mode,
+   kept as a gradient so a future dark palette drops straight in). */
+.card-surface {
+  background-image: linear-gradient(135deg, var(--color-surface), var(--color-surface-alt));
+}
+
+/* AppColors.royalMetallic — saturated violet hero plate, white content. */
+.plate-royal {
+  background-image: linear-gradient(135deg, #8455ef 0%, #6b38d4 55%, #5a2bb5 100%);
+}
+
+/* AppColors.navActiveGradient — the active sidebar pill. */
+.plate-nav-active {
+  background-image: linear-gradient(135deg, #8455ef, #6b38d4);
+}
+
+/* AppColors.rainbowAccent — the 2px strip under every page header. */
+.accent-rainbow {
+  background-image: linear-gradient(90deg, #6b38d4 0%, #a76500 50%, #8a4cfc 100%);
+}
+
+/* AppColors.goldHairline — a violet rule that fades at both ends. */
+.hairline-violet {
+  background-image: linear-gradient(
+    90deg,
+    rgba(107, 56, 212, 0) 0%,
+    rgba(107, 56, 212, 0.5) 25%,
+    rgba(132, 85, 239, 0.8) 50%,
+    rgba(107, 56, 212, 0.5) 75%,
+    rgba(107, 56, 212, 0) 100%
+  );
+}
+
+/* Hide the number-input spinners: every numeric field here is a currency or a
+   sort order typed in full, and the arrows only invite mis-clicks. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
