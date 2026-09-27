@@ -1,6 +1,27 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // This site was previously a Flutter web build, which registered
+      // flutter_service_worker.js. That worker serves the old app from cache,
+      // so a returning admin can keep seeing the Flutter panel even after this
+      // build is live. This React build ships no service worker, so remove any
+      // leftover registration (and its caches) once and reload.
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          if (!regs.length) return;
+          Promise.all(regs.map(function (r) { return r.unregister(); }))
+            .then(function () {
+              return (window.caches && caches.keys)
+                ? caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                  })
+                : null;
+            })
+            .then(function () { window.location.reload(); });
+        }).catch(function () {});
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dristi Fashions Admin Panel</title>

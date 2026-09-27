@@ -70,10 +70,34 @@ function main() {
     process.exit(1);
   }
 
-  step(`Uploading to s3://${BUCKET}`);
-  run(AWS, ['s3', 'sync', DIST, `s3://${BUCKET}`, '--delete', '--only-show-errors', '--region', REGION], {
-    stdio: 'inherit',
-  });
+  // Two passes, hashed assets first, so the new index.html can never be served
+  // before the bundles it points at exist.
+  //
+  // The distribution uses the managed CachingOptimized policy, which honours
+  // whatever Cache-Control the origin sends and otherwise caches for a day.
+  // `s3 sync` sets no Cache-Control at all, which would leave index.html cached
+  // in viewers' browsers where a CloudFront invalidation cannot reach it — so
+  // the header is set explicitly here.
+  step(`Uploading hashed assets to s3://${BUCKET}/assets`);
+  run(AWS, [
+    's3', 'sync', join(DIST, 'assets'), `s3://${BUCKET}/assets`,
+    '--delete', '--only-show-errors', '--region', REGION,
+    // Safe to pin: vite fingerprints every file in assets/, so a changed file
+    // is always a new name.
+    '--cache-control', 'public,max-age=31536000,immutable',
+  ], { stdio: 'inherit' });
+
+  step(`Uploading index.html and static files to s3://${BUCKET}`);
+  run(AWS, [
+    's3', 'sync', DIST, `s3://${BUCKET}`,
+    '--delete', '--only-show-errors', '--region', REGION,
+    // assets/ was just handled with its own caching; excluding it here also
+    // keeps --delete from removing what the previous pass uploaded.
+    '--exclude', 'assets/*',
+    // index.html must always be revalidated, or an admin's browser keeps
+    // serving a build that points at bundles this deploy has deleted.
+    '--cache-control', 'no-cache,must-revalidate',
+  ], { stdio: 'inherit' });
 
   step('Invalidating the CloudFront cache');
   const status = run(AWS, [
