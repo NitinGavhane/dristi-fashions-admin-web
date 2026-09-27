@@ -8,7 +8,7 @@
  * same way as their Dart counterparts.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Trash2, X } from 'lucide-react';
+import { AlertCircle, Close, Trash } from '../components/icons';
 import * as api from '../lib/api';
 import { ApiError, clearTokens, hasToken, initApiClient, setSessionExpiredHandler } from '../lib/apiClient';
 
@@ -178,7 +178,7 @@ export const useConfirm = (): ConfirmFn => useAdmin().confirm;
 /* ── Hosts ───────────────────────────────────────────────────────────────── */
 
 const TONE_ACCENT: Record<Toast['tone'], string> = {
-  default: 'var(--color-coral)',
+  default: 'var(--color-accent)',
   error: 'var(--color-error)',
   success: 'var(--color-success)',
 };
@@ -187,28 +187,28 @@ function ToastHost({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: num
   if (!toasts.length) return null;
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[100] flex flex-col items-center gap-2 px-4 pb-5"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex flex-col items-center gap-2.5 px-4 pb-7"
       role="status"
       aria-live="polite"
     >
       {toasts.map(t => (
         <div
           key={t.id}
-          className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-[10px] border bg-surface-alt px-4 py-3 shadow-lg-soft"
-          style={{ borderColor: `color-mix(in srgb, ${TONE_ACCENT[t.tone]} 25%, transparent)` }}
+          className="glass pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl px-4 py-3.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.95)]"
+          style={{ borderColor: `color-mix(in srgb, ${TONE_ACCENT[t.tone]} 35%, transparent)` }}
         >
           <span
-            className="mt-[3px] block size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: TONE_ACCENT[t.tone] }}
+            className="mt-[5px] block size-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: TONE_ACCENT[t.tone], boxShadow: `0 0 10px ${TONE_ACCENT[t.tone]}` }}
           />
-          <p className="flex-1 text-[13px] font-semibold tracking-[0.3px] text-ink">{t.message}</p>
+          <p className="flex-1 text-[13px] font-medium leading-relaxed text-ink">{t.message}</p>
           <button
             type="button"
             onClick={() => onDismiss(t.id)}
             aria-label="Dismiss"
-            className="-mr-1 -mt-1 rounded p-1 text-muted transition hover:text-ink"
+            className="-mr-1 -mt-0.5 rounded-full p-1 text-muted transition-colors duration-500 hover:text-ink"
           >
-            <X size={14} />
+            <Close size={14} />
           </button>
         </div>
       ))}
@@ -224,7 +224,7 @@ function ConfirmHost({
   onSettle: (ok: boolean) => void;
 }) {
   const isDelete = (options.tone ?? 'delete') === 'delete';
-  const accent = isDelete ? 'var(--color-error)' : 'var(--color-coral)';
+  const accent = isDelete ? 'var(--color-error)' : 'var(--color-accent)';
   const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -238,34 +238,36 @@ function ConfirmHost({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/35 p-4"
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 p-4 backdrop-blur-2xl"
       role="dialog"
       aria-modal="true"
       onMouseDown={e => {
         if (e.target === e.currentTarget) onSettle(false);
       }}
     >
-      <div className="w-full max-w-sm rounded-btn border border-hair-light bg-surface p-5 shadow-lg-soft">
-        <div className="flex items-center gap-2.5">
+      <div className="bezel w-full max-w-sm">
+        <div className="bezel-core p-6">
+        <div className="flex items-center gap-3">
           <span
-            className="grid size-7 place-items-center rounded-md"
-            style={{ backgroundColor: `color-mix(in srgb, ${accent} 10%, transparent)`, color: accent }}
+            className="grid size-9 place-items-center rounded-full border"
+            style={{
+              backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)`,
+              borderColor: `color-mix(in srgb, ${accent} 30%, transparent)`,
+              color: accent,
+            }}
           >
-            {isDelete ? <Trash2 size={16} /> : <AlertCircle size={16} />}
+            {isDelete ? <Trash size={17} /> : <AlertCircle size={16} />}
           </span>
-          <h2
-            className="font-display text-sm font-extrabold tracking-[3px]"
-            style={{ color: accent }}
-          >
-            {options.title ?? 'DELETE'}
+          <h2 className="font-display text-[1.1rem] font-semibold tracking-[-0.02em] text-ink">
+            {options.title ?? 'Delete'}
           </h2>
         </div>
-        <p className="mt-3 whitespace-pre-line text-[13px] leading-relaxed text-ink-soft">{options.message}</p>
-        <div className="mt-5 flex justify-end gap-2">
+        <p className="mt-4 whitespace-pre-line text-[13.5px] leading-relaxed text-ink-soft">{options.message}</p>
+        <div className="mt-7 flex justify-end gap-3">
           <button
             type="button"
             onClick={() => onSettle(false)}
-            className="label-caps rounded-input border border-hair-light bg-surface-alt px-[18px] py-2.5 text-[10px] tracking-[2px] text-ink-soft transition hover:bg-bg-alt"
+            className="rounded-full border border-hair-bright bg-white/[0.03] px-5 py-2.5 text-[13px] font-medium text-ink-soft transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-hair-strong hover:bg-white/[0.07] hover:text-ink active:scale-[0.97]"
           >
             Cancel
           </button>
@@ -273,11 +275,15 @@ function ConfirmHost({
             ref={confirmRef}
             type="button"
             onClick={() => onSettle(true)}
-            className="label-caps rounded-input px-[18px] py-2.5 text-[10px] tracking-[2px] text-white transition hover:brightness-110"
-            style={{ backgroundColor: accent }}
+            className="rounded-full px-5 py-2.5 text-[13px] font-medium text-white transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:brightness-110 active:scale-[0.97]"
+            style={{
+              background: `linear-gradient(150deg, color-mix(in srgb, ${accent} 82%, white), ${accent} 55%, color-mix(in srgb, ${accent} 78%, black))`,
+              boxShadow: `inset 0 1px 1px rgba(255,255,255,0.28), 0 14px 30px -14px ${accent}`,
+            }}
           >
             {options.confirmLabel ?? 'Delete'}
           </button>
+        </div>
         </div>
       </div>
     </div>

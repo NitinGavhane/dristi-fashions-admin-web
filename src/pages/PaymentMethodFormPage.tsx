@@ -6,7 +6,7 @@
  * offered — both admin configuration, never shown to buyers.
  */
 import { useEffect, useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise } from '../lib/format';

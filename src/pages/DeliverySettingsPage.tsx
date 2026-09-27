@@ -11,7 +11,7 @@
  *    silently switching the store to distance-based pricing.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { Settings } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { trimAmount } from '../lib/format';
@@ -195,7 +195,7 @@ export function DeliverySettingsPage({ onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Delivery" subtitle="CHARGE SETTINGS" onMenu={onMenu} />
+      <PageHeader title="Delivery" subtitle="Charge settings" onMenu={onMenu} />
       <PageBody className="space-y-5">
         {loading ? (
           <BrandLoader />
@@ -255,7 +255,7 @@ export function DeliverySettingsPage({ onMenu }: PageProps) {
               label="Save Settings"
               loading={saving}
               onClick={save}
-              icon={SlidersHorizontal}
+              icon={Settings}
             />
           </>
         )}

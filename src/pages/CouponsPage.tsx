@@ -1,7 +1,7 @@
+import { Gift, Plus } from '../components/icons';
 /**
  * Discount codes — a port of dristi-admin-app/lib/screens/coupons_screen.dart.
  */
-import { Gift, Plus } from 'lucide-react';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { money } from '../lib/format';
@@ -31,7 +31,7 @@ export function CouponsPage({ onNavigate, onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Coupons" subtitle={`${coupons.length} ACTIVE`} onMenu={onMenu} />
+      <PageHeader title="Coupons" subtitle={`${coupons.length} active`} onMenu={onMenu} />
       <PageBody>
         <div className="space-y-2.5">
           {loading ? (
@@ -45,17 +45,17 @@ export function CouponsPage({ onNavigate, onMenu }: PageProps) {
               <ListCard key={c.id}>
                 <div className="flex items-center gap-3.5">
                   <span
-                    className={`grid size-[52px] shrink-0 place-items-center rounded-input text-base font-black tracking-[1px] text-white ${
+                    className={`grid size-[52px] shrink-0 place-items-center rounded-2xl text-base font-black tracking-[1px] text-white ${
                       c.isActive
-                        ? 'bg-gradient-to-br from-coral to-coral-80 shadow-violet'
-                        : 'bg-gradient-to-br from-muted to-hair-light'
+                        ? 'bg-gradient-to-br from-accent to-accent-bright shadow-violet'
+                        : 'bg-gradient-to-br from-muted to-hair'
                     }`}
                   >
                     {c.code.slice(0, 3)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold tracking-[1px] text-ink">{c.code}</p>
-                    <span className="mt-1 inline-block rounded bg-coral/[0.08] px-1.5 py-0.5 text-[11px] font-semibold text-coral">
+                    <span className="mt-1 inline-block rounded bg-accent/[0.08] px-1.5 py-0.5 text-[11px] font-semibold text-accent">
                       {c.type.toUpperCase()} ·{' '}
                       {c.type === 'percentage' ? `${c.value.toFixed(0)}%` : money(c.value)} OFF
                     </span>

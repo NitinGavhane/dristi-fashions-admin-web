@@ -8,7 +8,7 @@
  * does the money reach the referrer's wallet.
  */
 import { useCallback, useState } from 'react';
-import { Settings, Share2, Trophy, Users } from 'lucide-react';
+import { NavUsers, Settings, Share, Trophy } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { money, trimAmount } from '../lib/format';
@@ -84,7 +84,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
     if (purchases.length === 0) {
       return (
         <EmptyBox
-          icon={Users}
+          icon={NavUsers}
           message={tab === 'pending' ? 'No commissions waiting' : 'No referred sales yet'}
         />
       );
@@ -101,8 +101,8 @@ export function ReferralsPage({ onMenu }: PageProps) {
       return (
         <ListCard key={p.id} className="mb-2.5">
           <div className="flex items-start gap-3.5">
-            <span className="grid size-[52px] shrink-0 place-items-center rounded-input bg-gradient-to-br from-coral to-coral-80 text-white">
-              <Share2 size={22} />
+            <span className="grid size-[52px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-bright text-white">
+              <Share size={22} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-ink">{p.referrerName}</p>
@@ -129,7 +129,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
               <button
                 type="button"
                 onClick={() => setApproving(p)}
-                className="label-caps flex-1 rounded-lg bg-btn py-2.5 text-[10px] font-bold tracking-[1.5px] text-white shadow-violet transition hover:brightness-110"
+                className="label-caps flex-1 rounded-lg bg-accent py-2.5 text-[10px] font-bold tracking-[1.5px] text-white shadow-violet transition hover:brightness-110"
               >
                 Give commission
               </button>
@@ -179,17 +179,17 @@ export function ReferralsPage({ onMenu }: PageProps) {
         title="Referrals"
         subtitle={
           settings.enabled
-            ? `${pendingCount} PENDING · ${trimAmount(settings.commissionPercentage)}% DEFAULT`
-            : 'PROGRAMME OFF'
+            ? `${pendingCount} pending · ${trimAmount(settings.commissionPercentage)}% default`
+            : 'Programme off'
         }
         onMenu={onMenu}
       />
       <PageBody>
         <PillTabs<Tab>
           tabs={[
-            { id: 'pending', label: 'PENDING' },
-            { id: 'all', label: 'ALL SALES' },
-            { id: 'referrers', label: 'REFERRERS' },
+            { id: 'pending', label: 'Pending' },
+            { id: 'all', label: 'All sales' },
+            { id: 'referrers', label: 'Referrers' },
           ]}
           active={tab}
           onSelect={setTab}
@@ -199,7 +199,7 @@ export function ReferralsPage({ onMenu }: PageProps) {
           {loading ? (
             <BrandLoader />
           ) : error ? (
-            <EmptyBox icon={Share2} message={`Could not load referrals: ${error}`} />
+            <EmptyBox icon={Share} message={`Could not load referrals: ${error}`} />
           ) : tab === 'referrers' ? (
             referrerList()
           ) : (
@@ -269,7 +269,7 @@ function SettingsDialog({
   return (
     <Modal
       title="REFER & EARN"
-      icon={Share2}
+      icon={Share}
       onClose={onClose}
       actions={
         <>
@@ -352,7 +352,7 @@ function ApproveDialog({
   return (
     <Modal
       title="PAY COMMISSION"
-      icon={Share2}
+      icon={Share}
       onClose={onClose}
       actions={
         <>

@@ -4,7 +4,7 @@
  * The code is upper-cased on save, as the Flutter form does.
  */
 import { useEffect, useState } from 'react';
-import { Gift } from 'lucide-react';
+import { Gift } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { useToast } from '../context/AdminContext';

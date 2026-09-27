@@ -9,7 +9,7 @@
  *    so a men's category can never hold a "women" product.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Film, HardDrive, Link2, Package, Play, Plus, Star, Users, X } from 'lucide-react';
+import { Close, Film, HardDrive, LinkIcon, NavUsers, Package, Play, Plus, Star } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise, money0 } from '../lib/format';
@@ -294,10 +294,10 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
           </div>
 
           {showPricePreview && (
-            <div className="mb-4 rounded-lg border border-btn/30 bg-btn/5 p-3.5">
+            <div className="mb-4 rounded-lg border border-accent/30 bg-accent/5 p-3.5">
               <PriceRow label="Original Price" amount={priceValue} />
               <PriceRow label="Discount" amount={-discountValue} />
-              <hr className="my-2 border-hair-light" />
+              <hr className="my-2 border-hair" />
               <PriceRow label="Final Price" amount={priceValue - discountValue} bold color="var(--color-success)" />
             </div>
           )}
@@ -325,15 +325,15 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
               {images.map((img, i) => (
                 <div
                   key={`${img.url}-${i}`}
-                  className="relative size-[90px] overflow-hidden rounded-lg border bg-bg-alt"
+                  className="relative size-[90px] overflow-hidden rounded-lg border bg-white/[0.03]"
                   style={{
-                    borderColor: img.isPrimary ? 'var(--color-coral)' : 'var(--color-hair)',
+                    borderColor: img.isPrimary ? 'var(--color-accent)' : 'var(--color-hair)',
                     borderWidth: img.isPrimary ? 2 : 1,
                   }}
                 >
                   <SafeImage src={img.url} alt="" className="size-full object-cover" />
                   {img.isPrimary && (
-                    <span className="absolute left-1 top-1 rounded-sm bg-gradient-to-r from-coral to-coral-80 px-1.5 py-0.5 text-[7px] font-extrabold tracking-[0.5px] text-white shadow-sm-soft">
+                    <span className="absolute left-1 top-1 rounded-sm bg-gradient-to-r from-accent to-accent-bright px-1.5 py-0.5 text-[7px] font-extrabold tracking-[0.5px] text-white shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]">
                       PRIMARY
                     </span>
                   )}
@@ -341,9 +341,9 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
                     type="button"
                     onClick={() => removeImage(i)}
                     aria-label="Remove image"
-                    className="absolute right-1 top-1 grid size-[22px] place-items-center rounded bg-btn text-white shadow-violet"
+                    className="absolute right-1 top-1 grid size-[22px] place-items-center rounded bg-accent text-white shadow-violet"
                   >
-                    <X size={14} />
+                    <Close size={14} />
                   </button>
                   {!img.isPrimary && (
                     <button
@@ -351,7 +351,7 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
                       onClick={() => makePrimary(i)}
                       aria-label="Make primary image"
                       title="Make primary"
-                      className="absolute bottom-1 right-1 grid size-[22px] place-items-center rounded bg-btn text-white shadow-violet"
+                      className="absolute bottom-1 right-1 grid size-[22px] place-items-center rounded bg-accent text-white shadow-violet"
                     >
                       <Star size={14} />
                     </button>
@@ -364,15 +364,15 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
           <button
             type="button"
             onClick={() => setUrlDialog('image')}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-btn py-3 text-white shadow-violet transition hover:brightness-110"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-3 text-white shadow-violet transition hover:brightness-110"
           >
-            <Link2 size={18} />
+            <LinkIcon size={18} />
             <span className="label-caps text-[10px] tracking-[2px]">Add image URL</span>
           </button>
         </FormSection>
 
         <FormSection title="Videos">
-          <div className="rounded-lg border border-coral/25 bg-coral/5 p-3">
+          <div className="rounded-lg border border-accent/25 bg-accent/5 p-3">
             <p className="text-[13px] font-semibold text-ink">Video requirements</p>
             <div className="mt-2">
               <SpecRow icon={HardDrive} text="Max file size: 50 MB" />
@@ -396,9 +396,9 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
               <button
                 type="button"
                 onClick={() => setUrlDialog('video')}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-btn py-3 text-white shadow-violet transition hover:brightness-110"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-3 text-white shadow-violet transition hover:brightness-110"
               >
-                <Link2 size={18} />
+                <LinkIcon size={18} />
                 <span className="label-caps text-[10px] tracking-[2px]">Add video URL</span>
               </button>
             </>
@@ -407,7 +407,7 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
               {videos.map((v, i) => (
                 <div
                   key={`${v.url}-${i}`}
-                  className="relative h-[90px] w-[120px] overflow-hidden rounded-lg border border-hair bg-bg-alt"
+                  className="relative h-[90px] w-[120px] overflow-hidden rounded-lg border border-hair bg-white/[0.03]"
                 >
                   {v.thumbnailUrl ? (
                     <SafeImage src={v.thumbnailUrl} alt="" className="size-full object-cover" />
@@ -425,9 +425,9 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
                     type="button"
                     onClick={() => setVideos(list => list.filter((_, idx) => idx !== i))}
                     aria-label="Remove video"
-                    className="absolute right-1 top-1 grid size-[22px] place-items-center rounded bg-btn text-white shadow-violet"
+                    className="absolute right-1 top-1 grid size-[22px] place-items-center rounded bg-accent text-white shadow-violet"
                   >
-                    <X size={14} />
+                    <Close size={14} />
                   </button>
                 </div>
               ))}
@@ -455,9 +455,9 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
           {/* Gender is inherited from the selected category (categories are
               gendered), so there is nothing to pick here. This only shows what
               will be saved. */}
-          <div className="flex items-center gap-2.5 rounded-lg border border-hair bg-bg-alt px-3.5 py-3">
+          <div className="flex items-center gap-2.5 rounded-lg border border-hair bg-white/[0.03] px-3.5 py-3">
             <span className="shrink-0 text-muted">
-              <Users size={16} />
+              <NavUsers size={16} />
             </span>
             <span className="text-xs text-muted">Gender (from category)</span>
             <span className="ml-auto text-[13px] font-bold text-ink">
@@ -477,7 +477,7 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
 
         <FormSection title="Variants">
           {variants.map((v, i) => (
-            <div key={v.key} className="mb-2.5 rounded-lg border border-hair bg-bg-alt p-3.5">
+            <div key={v.key} className="mb-2.5 rounded-lg border border-hair bg-white/[0.03] p-3.5">
               <div className="grid gap-x-2 sm:grid-cols-2">
                 <TextInput
                   label="Size"
@@ -518,9 +518,9 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
                   type="button"
                   onClick={() => setVariants(list => list.filter((_, idx) => idx !== i))}
                   aria-label="Remove variant"
-                  className="mt-[26px] grid size-9 shrink-0 place-items-center rounded-lg bg-btn text-white shadow-violet"
+                  className="mt-[26px] grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-white shadow-violet"
                 >
-                  <X size={16} />
+                  <Close size={16} />
                 </button>
               </div>
             </div>
@@ -529,7 +529,7 @@ export function ProductFormPage({ productId, onBack }: DetailPageProps & { produ
             <button
               type="button"
               onClick={() => setVariants(list => [...list, newVariant()])}
-              className="flex items-center gap-2 rounded-lg bg-btn px-6 py-3 text-white shadow-violet transition hover:brightness-110"
+              className="flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-white shadow-violet transition hover:brightness-110"
             >
               <Plus size={16} />
               <span className="label-caps text-[10px] tracking-[2px]">Add variant</span>
@@ -602,7 +602,7 @@ function UrlDialog({
   return (
     <Modal
       title={isImage ? 'ADD IMAGE URL' : 'ADD VIDEO URL'}
-      icon={isImage ? Link2 : Film}
+      icon={isImage ? LinkIcon : Film}
       onClose={onClose}
       actions={
         <>
@@ -625,7 +625,7 @@ function UrlDialog({
         autoFocus
         placeholder={isImage ? 'https://example.com/image.jpg' : 'https://example.com/product.mp4'}
         aria-label={isImage ? 'Image URL' : 'Video URL'}
-        className="w-full rounded-md border border-hair bg-bg-alt px-3 py-2.5 text-[13px] text-ink placeholder:text-xs placeholder:text-muted focus:border-coral focus:outline-none focus:ring-1 focus:ring-coral"
+        className="w-full rounded-md border border-hair bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink placeholder:text-xs placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
       />
     </Modal>
   );

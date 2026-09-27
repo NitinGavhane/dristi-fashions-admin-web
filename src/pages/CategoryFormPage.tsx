@@ -7,7 +7,7 @@
  * storefront's gender tabs expect to find.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Info, Shapes, X } from 'lucide-react';
+import { Close, Info, NavCategories } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise } from '../lib/format';
@@ -237,15 +237,15 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
           />
 
           {imageField.trim() && (
-            <div className="relative mb-3.5 h-[140px] overflow-hidden rounded-lg border border-hair bg-bg-alt">
+            <div className="relative mb-3.5 h-[140px] overflow-hidden rounded-lg border border-hair bg-white/[0.03]">
               <SafeImage src={imageField.trim()} alt="Category image preview" className="size-full object-cover" />
               <button
                 type="button"
                 onClick={() => setImageField('')}
                 aria-label="Clear image"
-                className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-md bg-btn text-white shadow-violet"
+                className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-md bg-accent text-white shadow-violet"
               >
-                <X size={16} />
+                <Close size={16} />
               </button>
             </div>
           )}
@@ -279,8 +279,8 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
         </FormSection>
 
         {!parentId && (
-          <div className="card-surface flex items-center gap-3 rounded-lg border border-gold/30 p-4 shadow-sm-soft">
-            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-gold/10 text-gold">
+          <div className="bg-white/[0.02] flex items-center gap-3 rounded-lg border border-amber/30 p-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]">
+            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-amber/10 text-amber">
               <Info size={18} />
             </span>
             <p className="text-[11px] text-ink-soft">
@@ -294,7 +294,7 @@ export function CategoryFormPage({ categoryId, onBack }: DetailPageProps & { cat
             label={isEdit ? 'Update Category' : 'Create Category'}
             loading={saving}
             onClick={save}
-            icon={Shapes}
+            icon={NavCategories}
           />
         </div>
       </PageBody>

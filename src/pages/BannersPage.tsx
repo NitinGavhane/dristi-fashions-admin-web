@@ -1,8 +1,8 @@
+import { ImageOff, NavBanners, Plus } from '../components/icons';
 /**
  * Hero banners — a port of dristi-admin-app/lib/screens/banners_screen.dart.
  * Each card shows the image at the App slider's 3:2 frame so the crop is honest.
  */
-import { GalleryHorizontalEnd, ImageOff, Plus } from 'lucide-react';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { useAsync } from '../lib/useAsync';
@@ -39,27 +39,27 @@ export function BannersPage({ onNavigate, onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Sliding Banners" subtitle={`${banners.length} TOTAL`} onMenu={onMenu} />
+      <PageHeader title="Sliding Banners" subtitle={`${banners.length} total`} onMenu={onMenu} />
       <PageBody>
         {loading ? (
           <BrandLoader />
         ) : error ? (
-          <EmptyBox icon={GalleryHorizontalEnd} message={error} />
+          <EmptyBox icon={NavBanners} message={error} />
         ) : banners.length === 0 ? (
-          <EmptyBox icon={GalleryHorizontalEnd} message="No banners yet — use + to add one" />
+          <EmptyBox icon={NavBanners} message="No banners yet — use + to add one" />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {banners.map(b => (
               <div
                 key={b.id}
-                className="card-surface overflow-hidden rounded-2xl border shadow-md-soft"
+                className="bg-white/[0.02] overflow-hidden rounded-2xl border shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]"
                 style={{
                   borderColor: b.isActive
-                    ? 'color-mix(in srgb, var(--color-coral) 25%, transparent)'
-                    : 'var(--color-hair-light)',
+                    ? 'color-mix(in srgb, var(--color-accent) 25%, transparent)'
+                    : 'var(--color-hair)',
                 }}
               >
-                <div className="bg-surface-alt" style={{ aspectRatio: 3 / 2 }}>
+                <div className="bg-raised" style={{ aspectRatio: 3 / 2 }}>
                   <SafeImage
                     src={b.imageUrl}
                     alt={b.title ?? 'Banner'}
@@ -75,7 +75,7 @@ export function BannersPage({ onNavigate, onMenu }: PageProps) {
                       style={{
                         color: b.isActive ? 'var(--color-muted)' : 'var(--color-error)',
                         backgroundColor: b.isActive
-                          ? 'var(--color-bg-alt)'
+                          ? 'var(--color-raised)'
                           : 'color-mix(in srgb, var(--color-error) 8%, transparent)',
                       }}
                     >

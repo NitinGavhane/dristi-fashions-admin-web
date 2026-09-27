@@ -5,7 +5,7 @@
  * with a reason, then verify the pickup OTP once the courier collects.
  */
 import { useState } from 'react';
-import { BadgeCheck, Check, ClipboardCheck, PackageOpen, ShieldCheck, Truck, X, XCircle } from 'lucide-react';
+import { BadgeCheck, Check, CheckCircleIcon, Close, NavReturns, ShieldCheck, Truck, XCircle } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { imageUrl, returnStatusColor, returnStatusLabel } from '../lib/format';
@@ -53,14 +53,14 @@ export function ReturnsPage({ onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Returns" subtitle={`${orders.length} TOTAL`} onMenu={onMenu} />
+      <PageHeader title="Returns" subtitle={`${orders.length} total`} onMenu={onMenu} />
       <PageBody>
         {loading ? (
           <BrandLoader />
         ) : error ? (
-          <EmptyBox icon={PackageOpen} message={error} />
+          <EmptyBox icon={NavReturns} message={error} />
         ) : orders.length === 0 ? (
-          <EmptyBox icon={PackageOpen} message="No return requests" />
+          <EmptyBox icon={NavReturns} message="No return requests" />
         ) : (
           orders.map(o => (
             <ListCard key={o.id} className="mb-2.5">
@@ -102,7 +102,7 @@ export function ReturnsPage({ onMenu }: PageProps) {
                   <div className="flex-1">
                     <PrimaryButton
                       label="Reject"
-                      icon={X}
+                      icon={Close}
                       color="var(--color-error)"
                       onClick={() => setRejecting(o)}
                     />
@@ -136,7 +136,7 @@ export function ReturnsPage({ onMenu }: PageProps) {
       {confirmApprove && (
         <Modal
           title="Approve Return"
-          icon={ClipboardCheck}
+          icon={CheckCircleIcon}
           accent="var(--color-success)"
           onClose={() => setConfirmApprove(null)}
           actions={
@@ -272,7 +272,7 @@ function RejectDialog({
         autoFocus
         aria-label="Rejection reason"
         placeholder="e.g. Item shows signs of use beyond the return window"
-        className="mt-2 w-full resize-y rounded-input border border-hair bg-bg-alt px-3 py-2.5 text-[13px] text-ink placeholder:text-xs placeholder:text-muted focus:border-error focus:outline-none focus:ring-1 focus:ring-error"
+        className="mt-2 w-full resize-y rounded-2xl border border-hair bg-white/[0.03] px-3 py-2.5 text-[13px] text-ink placeholder:text-xs placeholder:text-muted focus:border-error focus:outline-none focus:ring-1 focus:ring-error"
       />
     </Modal>
   );

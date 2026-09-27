@@ -7,7 +7,7 @@
  * its own gender if it is a real one, otherwise the parent's.
  */
 import { useMemo, useState } from 'react';
-import { CornerDownRight, Plus, Shapes } from 'lucide-react';
+import { Indent, NavCategories, Plus } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { capitalise, imageUrl } from '../lib/format';
@@ -93,7 +93,7 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
   const renderCard = (cat: AdminCategory) => {
     const parent = isParentCategory(cat);
     const children = parent ? groups.childrenOf(cat.id) : [];
-    const accent = cat.isActive ? 'var(--color-coral)' : 'var(--color-muted)';
+    const accent = cat.isActive ? 'var(--color-accent)' : 'var(--color-muted)';
 
     const meta = [
       parent ? 'PARENT' : 'SUBCATEGORY',
@@ -107,36 +107,36 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
     return (
       <div
         key={cat.id}
-        className="card-surface mb-2 rounded-2xl border p-4 shadow-md-soft"
+        className="bg-white/[0.02] mb-2 rounded-2xl border p-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]"
         style={{
           marginLeft: parent ? 0 : 20,
-          borderColor: parent ? 'color-mix(in srgb, var(--color-coral) 25%, transparent)' : 'var(--color-hair-light)',
+          borderColor: parent ? 'color-mix(in srgb, var(--color-accent) 25%, transparent)' : 'var(--color-hair)',
         }}
       >
         <div className="flex items-center gap-3.5">
           {!parent && (
             <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted/10 text-muted">
-              <CornerDownRight size={14} />
+              <Indent size={14} />
             </span>
           )}
           {cat.imageUrl ? (
             <SafeImage
               src={imageUrl(cat.imageUrl)}
               alt=""
-              className="size-[46px] shrink-0 rounded-input border object-cover"
+              className="size-[46px] shrink-0 rounded-2xl border object-cover"
               fallback={<span className="text-xl font-black">{cat.name[0]?.toUpperCase() ?? '?'}</span>}
             />
           ) : (
             <span
-              className="grid size-[46px] shrink-0 place-items-center rounded-input border text-xl font-black"
+              className="grid size-[46px] shrink-0 place-items-center rounded-2xl border text-xl font-black"
               style={{
                 color: accent,
                 borderColor: cat.isActive
-                  ? 'color-mix(in srgb, var(--color-coral) 20%, transparent)'
+                  ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
                   : 'var(--color-hair)',
                 backgroundColor: cat.isActive
-                  ? 'color-mix(in srgb, var(--color-coral) 10%, transparent)'
-                  : 'var(--color-bg-alt)',
+                  ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)'
+                  : 'var(--color-raised)',
               }}
             >
               {cat.name[0]?.toUpperCase() ?? '?'}
@@ -149,7 +149,7 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
               style={{
                 color: cat.isActive ? 'var(--color-muted)' : 'var(--color-error)',
                 backgroundColor: cat.isActive
-                  ? 'var(--color-bg-alt)'
+                  ? 'var(--color-raised)'
                   : 'color-mix(in srgb, var(--color-error) 8%, transparent)',
               }}
             >
@@ -167,21 +167,21 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
 
   const groupHeading = (text: string) => (
     <div className="flex items-center gap-2 pb-2.5 pt-3">
-      <span className="block h-0.5 w-4 rounded-sm bg-gradient-to-r from-coral to-coral-80" />
+      <span className="block h-0.5 w-4 rounded-sm bg-gradient-to-r from-accent to-accent-bright" />
       <span className="label-caps text-[10px] font-extrabold tracking-[3px] text-muted">{text}</span>
     </div>
   );
 
   const body = () => {
     if (loading) return <BrandLoader />;
-    if (error) return <EmptyBox icon={Shapes} message={error} />;
-    if (categories.length === 0) return <EmptyBox icon={Shapes} message="No categories" />;
+    if (error) return <EmptyBox icon={NavCategories} message={error} />;
+    if (categories.length === 0) return <EmptyBox icon={NavCategories} message="No categories" />;
 
     if (genderFilter) {
       const rows = categories.filter(
         c => genderFor(c, categories) === genderFilter && !isMainCategoryName(c.name),
       );
-      if (rows.length === 0) return <EmptyBox icon={Shapes} message="No categories" />;
+      if (rows.length === 0) return <EmptyBox icon={NavCategories} message="No categories" />;
       return rows.map(renderCard);
     }
 
@@ -218,7 +218,7 @@ export function CategoriesPage({ onNavigate, onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Categories" subtitle={`${categories.length} TOTAL`} onMenu={onMenu} />
+      <PageHeader title="Categories" subtitle={`${categories.length} total`} onMenu={onMenu} />
       <PageBody>
         <FilterChips options={GENDER_FILTERS} active={genderFilter} onSelect={setGenderFilter} />
         <div className="mt-4">{body()}</div>

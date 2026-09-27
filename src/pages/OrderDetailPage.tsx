@@ -6,7 +6,7 @@
  * and picks the row out of it, exactly as the Flutter screen does.
  */
 import { useCallback, useState } from 'react';
-import { SearchX, ShoppingBag } from 'lucide-react';
+import { ReceiptCancelled, ShoppingBag } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { money, orderStatusColor, orderStatusLabel } from '../lib/format';
@@ -66,7 +66,7 @@ export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId
       <>
         <PageHeader title="Order" onBack={onBack} />
         <PageBody>
-          <EmptyBox icon={SearchX} message={error ?? 'Not found'} />
+          <EmptyBox icon={ReceiptCancelled} message={error ?? 'Not found'} />
         </PageBody>
       </>
     );
@@ -97,7 +97,7 @@ export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId
             />
           )}
           <DividerLine />
-          <InfoBlock label="Total" value={money(order.finalAmount)} valueColor="var(--color-coral)" />
+          <InfoBlock label="Total" value={money(order.finalAmount)} valueColor="var(--color-accent)" />
           {order.shippingAddress && <InfoBlock label="Address" value={order.shippingAddress} />}
         </Card>
 
@@ -109,14 +109,14 @@ export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId
             order.items.map(item => (
               <ListCard key={item.id} className="!p-3.5">
                 <div className="flex items-center gap-3.5">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-lg border border-hair bg-bg-alt text-muted">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-lg border border-hair bg-white/[0.03] text-muted">
                     <ShoppingBag size={20} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold text-ink">{item.productName}</p>
                     <p className="text-[11px] text-muted">Qty: {item.quantity}</p>
                   </div>
-                  <span className="shrink-0 rounded-md border border-coral/20 bg-coral/[0.08] px-2.5 py-1.5 text-[13px] font-extrabold text-coral">
+                  <span className="shrink-0 rounded-md border border-accent/20 bg-accent/[0.08] px-2.5 py-1.5 text-[13px] font-extrabold text-accent">
                     {money(item.price * item.quantity)}
                   </span>
                 </div>
@@ -138,8 +138,8 @@ export function OrderDetailPage({ orderId, onBack }: DetailPageProps & { orderId
                 aria-current={current ? 'true' : undefined}
                 className={`label-caps rounded-lg border px-4 py-3 text-[10px] tracking-[1.5px] transition disabled:cursor-default ${
                   current
-                    ? 'border-coral-dark/35 bg-btn font-extrabold text-white shadow-violet'
-                    : 'border-btn-border bg-gradient-to-br from-btn-40 to-white font-bold text-btn hover:brightness-105 disabled:opacity-60'
+                    ? 'border-accent-deep/35 bg-accent font-extrabold text-white shadow-violet'
+                    : 'border-hair-bright bg-gradient-to-br from-accent-soft to-white font-bold text-accent hover:brightness-105 disabled:opacity-60'
                 }`}
               >
                 {orderStatusLabel(s)}

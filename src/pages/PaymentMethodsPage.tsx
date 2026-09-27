@@ -1,8 +1,8 @@
+import { Plus, Wallet } from '../components/icons';
 /**
  * Checkout payment methods — a port of
  * dristi-admin-app/lib/screens/payment_methods_screen.dart.
  */
-import { Plus, Wallet } from 'lucide-react';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { useAsync } from '../lib/useAsync';
@@ -38,7 +38,7 @@ export function PaymentMethodsPage({ onNavigate, onMenu }: PageProps) {
     <>
       <PageHeader
         title="Payment Methods"
-        subtitle={`${activeCount} ACTIVE · ${methods.length} TOTAL`}
+        subtitle={`${activeCount} active · ${methods.length} total`}
         onMenu={onMenu}
       />
       <PageBody>
@@ -53,17 +53,17 @@ export function PaymentMethodsPage({ onNavigate, onMenu }: PageProps) {
             methods.map(m => (
               <div
                 key={m.id}
-                className="card-surface flex items-center gap-2 rounded-2xl border p-3.5 shadow-md-soft"
+                className="bg-white/[0.02] flex items-center gap-2 rounded-2xl border p-3.5 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]"
                 style={{
                   borderColor: m.isActive
-                    ? 'color-mix(in srgb, var(--color-coral) 25%, transparent)'
-                    : 'var(--color-hair-light)',
+                    ? 'color-mix(in srgb, var(--color-accent) 25%, transparent)'
+                    : 'var(--color-hair)',
                 }}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-bold text-ink">{m.name}</p>
-                    <span className="rounded bg-bg-alt px-1.5 py-0.5 text-[9px] font-bold tracking-[1px] text-muted">
+                    <span className="rounded bg-white/[0.03] px-1.5 py-0.5 text-[9px] font-bold tracking-[1px] text-muted">
                       {m.code.toUpperCase()}
                     </span>
                   </div>
@@ -73,7 +73,7 @@ export function PaymentMethodsPage({ onNavigate, onMenu }: PageProps) {
                     style={{
                       color: m.isActive ? 'var(--color-muted)' : 'var(--color-error)',
                       backgroundColor: m.isActive
-                        ? 'var(--color-bg-alt)'
+                        ? 'var(--color-raised)'
                         : 'color-mix(in srgb, var(--color-error) 8%, transparent)',
                     }}
                   >

@@ -6,7 +6,7 @@
  * debounced client-side over title and SKU.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Package, Plus } from 'lucide-react';
+import { Package, Plus } from '../components/icons';
 import * as api from '../lib/api';
 import { capitalise, imageUrl, money } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
@@ -77,9 +77,9 @@ export function ProductsPage({ onNavigate, onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Products" subtitle={`${products.length} ITEMS`} onMenu={onMenu} />
+      <PageHeader title="Products" subtitle={`${products.length} items`} onMenu={onMenu} />
       <PageBody>
-        <SearchInput hint="SEARCH PRODUCTS" value={rawQuery} onChange={setRawQuery} />
+        <SearchInput hint="Search products by title or SKU" value={rawQuery} onChange={setRawQuery} />
         <div className="mt-3">
           <FilterChips options={GENDER_FILTERS} active={gender} onSelect={setGender} />
         </div>
@@ -98,29 +98,29 @@ export function ProductsPage({ onNavigate, onMenu }: PageProps) {
                   <SafeImage
                     src={imageUrl(p.primaryImage)}
                     alt=""
-                    className="size-[60px] shrink-0 rounded-input border border-hair object-cover"
+                    className="size-[60px] shrink-0 rounded-2xl border border-hair object-cover"
                     fallback={<Package size={24} />}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-ink">{p.title}</p>
-                    <span className="mt-1 inline-block rounded border border-hair bg-bg-alt px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.8px] text-muted">
+                    <span className="mt-1 inline-block rounded border border-hair bg-white/[0.03] px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.8px] text-muted">
                       SKU: {p.sku}
                     </span>
                     <div className="mt-2 flex flex-wrap items-baseline gap-2">
                       {p.discountPrice != null ? (
                         <>
-                          <span className="text-base font-black text-coral">{money(p.discountPrice)}</span>
+                          <span className="text-base font-black text-accent">{money(p.discountPrice)}</span>
                           <span className="text-xs text-muted line-through">{money(p.price)}</span>
                         </>
                       ) : (
-                        <span className="text-base font-black text-coral">{money(p.price)}</span>
+                        <span className="text-base font-black text-accent">{money(p.price)}</span>
                       )}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {p.featured && <Tag text="Featured" color="var(--color-gold)" filled />}
-                      {p.gender && <Tag text={capitalise(p.gender)} color="var(--color-coral)" />}
-                      {p.isReplaceable && <Tag text="Replace" color="var(--color-coral)" />}
-                      {p.isReturnable && <Tag text="Return" color="var(--color-coral)" />}
+                      {p.featured && <Tag text="Featured" color="var(--color-amber)" filled />}
+                      {p.gender && <Tag text={capitalise(p.gender)} color="var(--color-accent)" />}
+                      {p.isReplaceable && <Tag text="Replace" color="var(--color-accent)" />}
+                      {p.isReturnable && <Tag text="Return" color="var(--color-accent)" />}
                       {!p.isActive && <Tag text="Inactive" color="var(--color-error)" filled />}
                       {p.categoryName && <Tag text={p.categoryName} color="var(--color-muted)" />}
                       <Tag

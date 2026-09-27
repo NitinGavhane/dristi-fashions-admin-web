@@ -6,7 +6,7 @@
  * instead, and the form only ever submits `image_url`.
  */
 import { useEffect, useState } from 'react';
-import { GalleryHorizontalEnd } from 'lucide-react';
+import { NavBanners } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { IMAGE_ACCEPT, IMAGE_SPECS, UploadRejected, validateAndUploadImage } from '../lib/uploads';
@@ -170,7 +170,7 @@ export function BannerFormPage({ bannerId, onBack }: DetailPageProps & { bannerI
             label={isEdit ? 'Update Banner' : 'Create Banner'}
             loading={saving}
             onClick={save}
-            icon={GalleryHorizontalEnd}
+            icon={NavBanners}
           />
         </div>
       </PageBody>

@@ -14,7 +14,7 @@
  * important gets cut on either device.
  */
 import { useEffect, useState } from 'react';
-import { ImageOff, ImagePlus, Loader2, Scissors, SlidersHorizontal } from 'lucide-react';
+import { ImageOff, ImagePlus, Scissors, Settings, Spinner } from './icons';
 
 /** Frame ratios the cover-image must fill, matching the real front-ends. */
 const PHONE_RATIO = 3 / 2; // user-app HeroBanner slider
@@ -62,9 +62,9 @@ export function BannerCropPreview({ imageUrl }: { imageUrl: string }) {
   const hasImage = imageUrl.trim().length > 0;
 
   return (
-    <div className="rounded-input border border-hair-light bg-surface p-3">
+    <div className="rounded-2xl border border-hair bg-surface p-3">
       <div className="flex items-center gap-2">
-        <span className="text-coral">
+        <span className="text-accent">
           <Scissors size={16} />
         </span>
         <p className="text-[13px] font-semibold text-ink">How your banner is cropped</p>
@@ -76,13 +76,13 @@ export function BannerCropPreview({ imageUrl }: { imageUrl: string }) {
       </p>
 
       {!hasImage ? (
-        <div className="mt-3 grid place-items-center rounded-lg border border-hair-light bg-surface-alt px-4 py-6 text-muted">
+        <div className="mt-3 grid place-items-center rounded-lg border border-hair bg-raised px-4 py-6 text-muted">
           <ImagePlus size={28} />
           <p className="mt-2 text-[12.5px]">Upload an image to preview the crop</p>
         </div>
       ) : state.status === 'decoding' ? (
-        <div className="mt-3 grid place-items-center py-5 text-coral">
-          <Loader2 size={18} className="animate-spin" />
+        <div className="mt-3 grid place-items-center py-5 text-accent">
+          <Spinner size={18} className="animate-spin" />
         </div>
       ) : state.status === 'done' ? (
         <>
@@ -120,9 +120,9 @@ function DimensionNote({ size }: { size: Dimensions }) {
     ratio < PHONE_RATIO ? 'taller than recommended' : ratio <= WEB_RATIO ? 'a good match' : 'wider than recommended';
 
   return (
-    <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-coral/25 bg-coral/5 px-2.5 py-2">
-      <span className="shrink-0 text-coral">
-        <SlidersHorizontal size={15} />
+    <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-accent/25 bg-accent/5 px-2.5 py-2">
+      <span className="shrink-0 text-accent">
+        <Settings size={15} />
       </span>
       <p className="text-xs text-ink-soft">
         Your image: {Math.round(size.width)} × {Math.round(size.height)} px ({match}). Recommended: 1920 × 1080 px
@@ -169,7 +169,7 @@ function SurfaceFrame({
         <p className="flex-1 text-[12.5px] font-semibold text-ink-soft">{label}</p>
         <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-semibold text-muted">{ratioLabel}</span>
       </div>
-      <div className="relative mt-2 overflow-hidden rounded-lg bg-surface-alt" style={{ aspectRatio: ratio }}>
+      <div className="relative mt-2 overflow-hidden rounded-lg bg-raised" style={{ aspectRatio: ratio }}>
         <img src={imageUrl} alt="" className="absolute inset-0 size-full object-cover" />
         <SafeZoneOverlay />
         <div className="absolute inset-x-2 bottom-1.5 flex justify-center">

@@ -6,7 +6,7 @@
  * order delivered.
  */
 import { useState } from 'react';
-import { BadgeCheck, ExternalLink, RefreshCw, ShieldCheck, Truck } from 'lucide-react';
+import { BadgeCheck, ExternalLink, Refresh, ShieldCheck, Truck } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { money, orderStatusColor, orderStatusLabel } from '../lib/format';
@@ -113,13 +113,13 @@ export function DeliveryPage({ onMenu }: PageProps) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-base font-black text-coral">{money(o.finalAmount)}</span>
+          <span className="text-base font-black text-accent">{money(o.finalAmount)}</span>
           <span className="flex-1" />
           {(o.trackingUrl || o.awbCode) && (
             <PrimaryButton
               label={isRefreshing ? 'Refreshing' : 'Refresh'}
               full={false}
-              icon={RefreshCw}
+              icon={Refresh}
               color="var(--color-info)"
               loading={isRefreshing}
               onClick={() => refreshTracking(o)}
@@ -130,7 +130,7 @@ export function DeliveryPage({ onMenu }: PageProps) {
               href={o.trackingUrl}
               target="_blank"
               rel="noreferrer noopener"
-              className="label-caps inline-flex h-10 items-center gap-2 rounded-btn border px-5 text-[10px] tracking-[1.5px] text-white"
+              className="label-caps inline-flex h-10 items-center gap-2 rounded-2xl border px-5 text-[10px] tracking-[1.5px] text-white"
               style={{
                 backgroundColor: 'var(--color-info)',
                 borderColor: 'color-mix(in srgb, var(--color-info) 75%, black)',
@@ -166,7 +166,7 @@ export function DeliveryPage({ onMenu }: PageProps) {
     <>
       <PageHeader
         title="Delivery"
-        subtitle={`${awaiting.length} TO DISPATCH · ${transit.length} IN TRANSIT`}
+        subtitle={`${awaiting.length} to dispatch · ${transit.length} in transit`}
         onMenu={onMenu}
       />
       <PageBody>

@@ -67,7 +67,7 @@ export function orderStatusColor(status: string): string {
     case 'processing':
       return 'var(--color-warning)';
     case 'dispatched':
-      return 'var(--color-purple)';
+      return 'var(--color-accent)';
     case 'out_for_delivery':
       return 'var(--color-teal)';
     case 'delivered':

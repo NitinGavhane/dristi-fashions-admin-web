@@ -26,19 +26,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dristi Fashions Admin Panel</title>
     <meta name="description" content="Dristi Fashions — admin panel for products, orders, delivery and referrals." />
-    <meta name="theme-color" content="#6b38d4" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="color-scheme" content="dark" />
     <!-- An admin console has no business being indexed. -->
     <meta name="robots" content="noindex, nofollow" />
 
     <link rel="icon" type="image/jpeg" href="./logo.jpg" />
     <link rel="apple-touch-icon" href="./logo.jpg" />
 
+    <!-- Clash Display carries the headings; Plus Jakarta Sans the UI; Geist Mono
+         the figures that sit in columns (order numbers, SKUs, OTPs). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Montserrat:wght@600..900&display=swap"
+      href="https://api.fontshare.com/v2/css?f%5B%5D=clash-display@400,500,600,700&display=swap"
       rel="stylesheet"
     />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300..800&family=Geist+Mono:wght@300..600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Paint the void before the CSS bundle lands, so a slow connection never
+         flashes white into an OLED console. -->
+    <style>
+      html { background-color: #050505; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

@@ -4,7 +4,7 @@
  * this, because the backend exposes no admin user-mutation endpoint.
  */
 import { useMemo, useState } from 'react';
-import { Users } from 'lucide-react';
+import { NavUsers } from '../components/icons';
 import * as api from '../lib/api';
 import { money0 } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
@@ -29,17 +29,17 @@ export function UsersPage({ onMenu }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Users" subtitle={`${users.length} REGISTERED`} onMenu={onMenu} />
+      <PageHeader title="Users" subtitle={`${users.length} registered`} onMenu={onMenu} />
       <PageBody>
-        <SearchInput hint="SEARCH USERS" value={query} onChange={setQuery} />
+        <SearchInput hint="Search users by name or email" value={query} onChange={setQuery} />
 
         <div className="mt-3 space-y-2">
           {loading ? (
             <BrandLoader />
           ) : error ? (
-            <EmptyBox icon={Users} message={error} />
+            <EmptyBox icon={NavUsers} message={error} />
           ) : filtered.length === 0 ? (
-            <EmptyBox icon={Users} message="No users found" />
+            <EmptyBox icon={NavUsers} message="No users found" />
           ) : (
             filtered.map(u => {
               const isAdmin = u.role === 'admin';
@@ -47,8 +47,8 @@ export function UsersPage({ onMenu }: PageProps) {
                 <ListCard key={u.id}>
                   <div className="flex items-start gap-3.5">
                     <span
-                      className={`grid size-12 shrink-0 place-items-center rounded-btn text-lg font-black text-white ${
-                        isAdmin ? 'bg-btn shadow-violet' : 'plate-royal border border-coral/40 shadow-sm-soft'
+                      className={`grid size-12 shrink-0 place-items-center rounded-2xl text-lg font-black text-white ${
+                        isAdmin ? 'bg-accent shadow-violet' : 'plate-accent border border-accent/40 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)]'
                       }`}
                     >
                       {u.fullName ? u.fullName[0].toUpperCase() : '?'}
@@ -58,7 +58,7 @@ export function UsersPage({ onMenu }: PageProps) {
                       <p className="truncate text-xs text-ink-soft">{u.email}</p>
                       <p className="mt-0.5 text-[10px] font-semibold tracking-[0.5px] text-muted">{shortRef(u.id)}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        <Tag text={u.role} color={isAdmin ? 'var(--color-gold)' : 'var(--color-coral)'} filled />
+                        <Tag text={u.role} color={isAdmin ? 'var(--color-amber)' : 'var(--color-accent)'} filled />
                         <Tag
                           text={u.isVerified ? 'Verified' : 'Unverified'}
                           color={u.isVerified ? 'var(--color-success)' : 'var(--color-warning)'}

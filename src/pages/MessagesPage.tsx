@@ -6,7 +6,7 @@
  * mailbox, so this screen is the delivery route.
  */
 import { useCallback, useState } from 'react';
-import { AtSign, Copy, Mail, MailOpen, Trash2 } from 'lucide-react';
+import { AtSign, Copy, Mail, MailOpen, Trash } from '../components/icons';
 import * as api from '../lib/api';
 import { errorMessage } from '../lib/apiClient';
 import { whenLocal } from '../lib/format';
@@ -106,8 +106,8 @@ export function MessagesPage({ onMenu }: PageProps) {
             <span
               className="mt-1.5 block size-2.5 shrink-0 rounded-full"
               style={{
-                backgroundColor: m.isRead ? 'transparent' : 'var(--color-coral)',
-                border: m.isRead ? '1px solid var(--color-hair-light)' : undefined,
+                backgroundColor: m.isRead ? 'transparent' : 'var(--color-accent)',
+                border: m.isRead ? '1px solid var(--color-hair)' : undefined,
               }}
             />
             <span className="min-w-0 flex-1">
@@ -126,7 +126,7 @@ export function MessagesPage({ onMenu }: PageProps) {
             aria-label={`Delete enquiry from ${m.fullName}`}
             className="grid size-9 shrink-0 place-items-center rounded-lg border border-error text-error transition hover:bg-error/5"
           >
-            <Trash2 size={15} />
+            <Trash size={15} />
           </button>
         </div>
       </ListCard>
@@ -138,7 +138,7 @@ export function MessagesPage({ onMenu }: PageProps) {
     return subscribers.map(s => (
       <ListCard key={s.id} className="mb-2.5">
         <div className="flex items-center gap-3">
-          <span className="shrink-0 text-coral">
+          <span className="shrink-0 text-accent">
             <AtSign size={17} />
           </span>
           <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{s.email}</p>
@@ -154,16 +154,16 @@ export function MessagesPage({ onMenu }: PageProps) {
         title="Messages"
         subtitle={
           unread > 0
-            ? `${unread} UNREAD · ${subscribers.length} SUBSCRIBERS`
-            : `${messages.length} ENQUIRIES · ${subscribers.length} SUBSCRIBERS`
+            ? `${unread} unread · ${subscribers.length} subscribers`
+            : `${messages.length} enquiries · ${subscribers.length} subscribers`
         }
         onMenu={onMenu}
       />
       <PageBody>
         <PillTabs<Tab>
           tabs={[
-            { id: 'enquiries', label: 'ENQUIRIES' },
-            { id: 'subscribers', label: 'SUBSCRIBERS' },
+            { id: 'enquiries', label: 'Enquiries' },
+            { id: 'subscribers', label: 'Subscribers' },
           ]}
           active={tab}
           onSelect={setTab}
@@ -219,7 +219,7 @@ function MessageDialog({ message, onClose }: { message: ContactMessage; onClose:
           <button
             type="button"
             onClick={copyEmail}
-            className="flex items-center gap-1.5 rounded-input px-3 py-2 text-[11px] text-muted transition hover:text-ink"
+            className="flex items-center gap-1.5 rounded-2xl px-3 py-2 text-[11px] text-muted transition hover:text-ink"
           >
             <Copy size={15} />
             COPY EMAIL
@@ -231,7 +231,7 @@ function MessageDialog({ message, onClose }: { message: ContactMessage; onClose:
       {row('From', message.fullName)}
       {row('Email', message.email)}
       {row('Received', whenLocal(message.createdAt))}
-      <div className="mt-3.5 rounded-lg border border-hair bg-bg-alt p-3.5">
+      <div className="mt-3.5 rounded-lg border border-hair bg-white/[0.03] p-3.5">
         <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-ink">{message.message}</p>
       </div>
     </Modal>

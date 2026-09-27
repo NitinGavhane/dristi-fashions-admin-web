@@ -1,192 +1,293 @@
 @import "tailwindcss";
 
 /*
- * Design tokens transcribed from dristi-admin-app/lib/config/theme.dart
- * (AppColors + Responsive). The Flutter admin panel never enables its dark
- * palette — AppColors.setDark() is not called anywhere — so the website is
- * light-only too, and the token names are kept so the two stay comparable.
+ * ETHEREAL GLASS — the Dristi Fashions admin console.
  *
- * `--color-*` names are registered with Tailwind v4's @theme so they are also
- * usable as utilities (bg-surface, text-muted, border-hair, …).
+ * An OLED-black surface lit by a violet mesh, with vantablack glass cards and
+ * hairline highlights. The brand violet survives as the signature glow, so the
+ * panel still reads as Dristi even though the language is entirely different
+ * from the Flutter app's light lavender.
+ *
+ * Every colour is a token. Components never hardcode a hex, which is what let
+ * the whole console flip from light to dark without touching page logic.
  */
 @theme {
-  /* Canvas / surfaces */
-  --color-bg: #f6f3fc;
-  --color-bg-alt: #f3ebf8;
-  --color-surface: #ffffff;
-  --color-surface-alt: #fef7ff;
-  --color-surface-raised: #ffffff;
+  /* ── Canvas ─────────────────────────────────────────────────────────────
+     Three depths of black. `void` is the page, `surface` a card sitting on it,
+     `raised` something sitting on the card. The gaps are deliberately tiny —
+     on OLED, separation comes from hairlines and glow, not from value jumps. */
+  --color-void: #050505;
+  --color-surface: #0b0b0e;
+  --color-raised: #121216;
+  --color-sunken: #08080a;
 
-  /* Hairlines */
-  --color-hair: #cbc3d7;
-  --color-hair-light: #e7e0ed;
+  /* ── Hairlines ──────────────────────────────────────────────────────────
+     Never a grey border. These are white at very low alpha, so they read as a
+     lit edge rather than a drawn line. */
+  --color-hair: rgba(255, 255, 255, 0.07);
+  --color-hair-bright: rgba(255, 255, 255, 0.12);
+  --color-hair-strong: rgba(255, 255, 255, 0.18);
 
-  /* Text ramp */
-  --color-ink: #1d1a23;
-  --color-ink-soft: #494454;
-  --color-muted: #7b7486;
+  /* ── Text ramp ──────────────────────────────────────────────────────────
+     Pure white is reserved for the single most important thing on screen. */
+  --color-ink: rgba(255, 255, 255, 0.95);
+  --color-ink-soft: rgba(255, 255, 255, 0.64);
+  --color-muted: rgba(255, 255, 255, 0.42);
+  --color-faint: rgba(255, 255, 255, 0.26);
 
-  /* Brand — `coral` is the primary violet (token name kept from theme.dart) */
-  --color-coral: #6b38d4;
-  --color-coral-80: #8455ef;
-  --color-coral-40: #cbb8f0;
-  --color-coral-dark: #4c1d95;
+  /* ── Brand ──────────────────────────────────────────────────────────────
+     #6b38d4 is the Dristi violet, but it goes muddy on black — so the deep
+     value is kept for glows and mesh, and the luminous values carry text. */
+  --color-accent: #8b5cf6;
+  --color-accent-bright: #a78bfa;
+  --color-accent-soft: #c4b5fd;
+  --color-accent-deep: #6b38d4;
+  --color-accent-abyss: #3b1d80;
 
-  /* Secondary accent — a thin amber, used sparingly on badges */
-  --color-gold: #a76500;
-  --color-gold-80: #c67c1a;
-  --color-gold-40: #ffdcbb;
+  /* Secondary — the Flutter panel's amber, re-lit for a dark surface. */
+  --color-amber: #f5b942;
+  --color-amber-soft: #fcd34d;
 
-  /* Semantic */
-  --color-success: #16a34a;
-  --color-success-80: #45b56e;
-  --color-error: #ba1a1a;
-  --color-error-80: #d0322e;
-  --color-info: #8a4cfc;
-  --color-purple: #8a4cfc;
-  --color-teal: #0d9488;
-  --color-warning: #a76500;
+  /* ── Semantic ───────────────────────────────────────────────────────────*/
+  --color-success: #34d399;
+  --color-error: #fb7185;
+  --color-warning: #fbbf24;
+  --color-info: #818cf8;
+  --color-teal: #2dd4bf;
 
-  /* Action fill */
-  --color-btn: #6b38d4;
-  --color-btn-80: #8455ef;
-  --color-btn-40: #cbb8f0;
-  --color-btn-border: #d8cef8;
+  /* ── Type ───────────────────────────────────────────────────────────────*/
+  --font-display: 'Clash Display', 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 
-  /* Radius scale (rInput / rButton / rCard / rCardLg / rPill) */
-  --radius-input: 10px;
-  --radius-btn: 12px;
-  --radius-card: 16px;
-  --radius-card-lg: 24px;
-
-  --font-sans: 'Inter', system-ui, -apple-system, 'Noto Sans', sans-serif;
-  --font-display: 'Montserrat', 'Inter', 'Noto Sans', sans-serif;
+  /* ── Motion ─────────────────────────────────────────────────────────────
+     One spring for everything. Nothing in this console uses ease-in-out. */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
   html {
-    /* Nothing in the panel scrolls sideways; `clip` (not `hidden`) keeps the
-       sticky page headers working. */
     overflow-x: clip;
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: var(--color-bg);
+    background-color: var(--color-void);
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01', 'cv01';
   }
 
-  /* Media never dictates the layout width. */
-  img,
-  svg,
-  video,
-  canvas,
-  iframe {
-    max-width: 100%;
+  /* Numbers that sit in columns — order totals, stock, OTPs — must not jitter
+     as they change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 
-  img,
-  video {
-    height: auto;
-  }
+  img, svg, video, canvas, iframe { max-width: 100%; }
+  img, video { height: auto; }
 
-  /* Long unbroken strings (order numbers, S3 URLs, emails) wrap instead of
-     pushing their container past the viewport. */
   h1, h2, h3, h4, h5, h6, p, span, dd, dt, li, button, a, label {
     overflow-wrap: break-word;
   }
 
-  input,
-  select,
-  textarea {
-    min-width: 0;
-    max-width: 100%;
-  }
+  input, select, textarea { min-width: 0; max-width: 100%; }
 
-  /* Mobile Safari zooms whenever a focused field is under 16px and leaves the
-     page scrolled sideways once it blurs. */
+  /* Mobile Safari zooms whenever a focused field is under 16px. */
   @media (max-width: 640px) {
-    input:not([type='checkbox']):not([type='radio']),
-    select,
-    textarea {
+    input:not([type='checkbox']):not([type='radio']), select, textarea {
       font-size: 16px;
     }
   }
+
+  /* A focus ring that belongs to this palette, not the browser's. */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--color-void), 0 0 0 3px rgba(139, 92, 246, 0.55);
+    border-radius: inherit;
+  }
+
+  ::selection {
+    background: rgba(139, 92, 246, 0.35);
+    color: #fff;
+  }
+
+  /* Scrollbars, restyled — a default grey scrollbar breaks an OLED surface. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); background-clip: content-box; }
 }
 
-/* ── Composite decorations from theme.dart ───────────────────────────────── */
+/* ══ MESH & GRAIN ═══════════════════════════════════════════════════════════
+   Both are fixed and pointer-events-none, so neither ever repaints while the
+   page scrolls. The mesh is what stops the black reading as flat #000. */
 
-/* AppColors.heading(...) — Montserrat display type. */
-.font-display {
-  font-family: var(--font-display);
+.mesh-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(107, 56, 212, 0.28), transparent 60%),
+    radial-gradient(45rem 35rem at 92% 8%, rgba(139, 92, 246, 0.16), transparent 62%),
+    radial-gradient(50rem 40rem at 70% 105%, rgba(59, 29, 128, 0.22), transparent 60%);
 }
 
-/* Tiny uppercase label used all over the panel (subtitles, stat captions). */
+/* Film grain, so the gradients never band. SVG noise keeps it dependency-free. */
+.grain-field {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ══ THE DOUBLE-BEZEL ═══════════════════════════════════════════════════════
+   Nothing sits flat on the background. A card is a machined tray (the shell)
+   holding a glass plate (the core), with concentric radii. */
+
+.bezel {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--color-hair);
+  border-radius: 2rem;
+  padding: 0.375rem;
+}
+
+.bezel-core {
+  background: linear-gradient(160deg, var(--color-raised), var(--color-surface) 65%);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  /* The top highlight is what makes it read as a physical lit edge. */
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.07),
+    0 24px 60px -24px rgba(0, 0, 0, 0.9);
+  border-radius: calc(2rem - 0.375rem);
+}
+
+/* A tighter pair for list rows, where a 2rem radius would look bloated. */
+.bezel-sm { border-radius: 1.25rem; padding: 0.3125rem; }
+.bezel-sm > .bezel-core { border-radius: calc(1.25rem - 0.3125rem); }
+
+/* Glass, for anything fixed — the nav island and modal shells only. */
+.glass {
+  background: rgba(10, 10, 14, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--color-hair-bright);
+}
+
+/* ══ ACCENT SURFACES ════════════════════════════════════════════════════════*/
+
+/* The violet plate the dashboard's hero tiles and primary CTAs wear. */
+.plate-accent {
+  background: linear-gradient(150deg, #a78bfa 0%, #7c3aed 45%, #5b21b6 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    0 18px 40px -18px rgba(139, 92, 246, 0.85);
+}
+
+/* The violet glow a primary surface casts onto the void beneath it. */
+.shadow-violet {
+  box-shadow: 0 18px 40px -18px rgba(139, 92, 246, 0.75);
+}
+
+/* The microscopic uppercase label used for field names and metadata. */
 .label-caps {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
-/* AppColors.shadowSm / shadowMd / shadowLg */
-.shadow-sm-soft {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-.shadow-md-soft {
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06), 0 1px 16px rgba(0, 0, 0, 0.035);
-}
-.shadow-lg-soft {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 4px 32px rgba(0, 0, 0, 0.05);
-}
-
-/* AppColors.shadowGold — the primary-action violet glow. */
-.shadow-violet {
-  box-shadow: 0 10px 20px rgba(107, 56, 212, 0.16), 0 1px 3px rgba(107, 56, 212, 0.06);
-}
-
-/* AppColors.cardGradient — surface -> surfaceRaised (both white in light mode,
-   kept as a gradient so a future dark palette drops straight in). */
-.card-surface {
-  background-image: linear-gradient(135deg, var(--color-surface), var(--color-surface-alt));
-}
-
-/* AppColors.royalMetallic — saturated violet hero plate, white content. */
-.plate-royal {
-  background-image: linear-gradient(135deg, #8455ef 0%, #6b38d4 55%, #5a2bb5 100%);
-}
-
-/* AppColors.navActiveGradient — the active sidebar pill. */
-.plate-nav-active {
-  background-image: linear-gradient(135deg, #8455ef, #6b38d4);
-}
-
-/* AppColors.rainbowAccent — the 2px strip under every page header. */
-.accent-rainbow {
-  background-image: linear-gradient(90deg, #6b38d4 0%, #a76500 50%, #8a4cfc 100%);
-}
-
-/* AppColors.goldHairline — a violet rule that fades at both ends. */
-.hairline-violet {
-  background-image: linear-gradient(
+/* A hairline that fades at both ends. */
+.hairline-fade {
+  background: linear-gradient(
     90deg,
-    rgba(107, 56, 212, 0) 0%,
-    rgba(107, 56, 212, 0.5) 25%,
-    rgba(132, 85, 239, 0.8) 50%,
-    rgba(107, 56, 212, 0.5) 75%,
-    rgba(107, 56, 212, 0) 100%
+    transparent,
+    rgba(139, 92, 246, 0.55) 35%,
+    rgba(167, 139, 250, 0.8) 50%,
+    rgba(139, 92, 246, 0.55) 65%,
+    transparent
   );
 }
 
-/* Hide the number-input spinners: every numeric field here is a currency or a
-   sort order typed in full, and the arrows only invite mis-clicks. */
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+/* ══ MOTION ═════════════════════════════════════════════════════════════════
+   Scroll entry. Elements arrive with mass — they rise, sharpen and settle.
+   Driven by IntersectionObserver in Reveal.tsx; transform/opacity/filter only. */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 2.5rem, 0);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s var(--ease-glide),
+    transform 0.9s var(--ease-glide),
+    filter 0.9s var(--ease-glide);
+  will-change: transform, opacity;
 }
-input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
+
+.reveal[data-shown='true'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0);
+  will-change: auto;
+}
+
+/* Anyone who asked the OS for less motion gets none of it. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal[data-shown='true'] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The sweep that crosses a primary button on hover. */
+@keyframes sheen {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to   { transform: translateX(220%) skewX(-18deg); }
+}
+.group:hover .sheen { animation: sheen 0.9s var(--ease-glide); }
+
+/* A slow drift on the login mesh, so the page is never completely still. */
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -2%, 0) scale(1.06); }
+}
+.drift { animation: drift 22s var(--ease-glide) infinite; }
+
+/* Number inputs keep their spinners off — every numeric field here is typed. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
+/* The browser's autofill paints a light-blue block straight through the glass. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-raised) inset;
+  caret-color: var(--color-ink);
+  transition: background-color 9999s ease-in-out 0s;
 }
